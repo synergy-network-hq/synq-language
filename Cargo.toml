@@ -1,0 +1,28 @@
+[workspace]
+members = [
+    "vm",
+    "compiler",
+    "cli",
+    "pqsynq/pqsynq",
+    # PQC crypto crates - internal dependencies
+    "pqrust/pqrust-traits",
+    "pqrust/pqrust-internals",
+    "pqrust/pqrust-mlkem",
+    "pqrust/pqrust-mldsa",
+    "pqrust/pqrust-fndsa",
+]
+exclude = [
+    "pqrust/pqrust",
+    "pqrust/pqrust-slhdsa",
+    "pqrust/pqrust-hqckem",
+    "pqrust/pqrust-cmce",
+]
+resolver = "2"
+
+# Workspace dependencies for PQC crates - all internal to SynQ
+[workspace.dependencies]
+pqrust-traits = { path = "pqrust/pqrust-traits", default-features = false, features = ["std"] }
+pqrust-internals = { path = "pqrust/pqrust-internals" }
+pqrust-mlkem = { path = "pqrust/pqrust-mlkem" }
+pqrust-mldsa = { path = "pqrust/pqrust-mldsa" }
+pqrust-fndsa = { path = "pqrust/pqrust-fndsa" }

@@ -1,0 +1,10 @@
+[package]
+name = "quantumvm"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+pqsynq = { path = "../pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa"] }
+
+[dev-dependencies]
+pqsynq = { path = "../pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa"] }
