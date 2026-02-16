@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use super::opcode::{OpCode, VMError};
-use pqsynq::{Sign, Kem, DigitalSignature, KeyEncapsulation};
+use pqsynq::{DigitalSignature, Kem, KeyEncapsulation, Sign};
+use std::collections::HashMap;
 
 // Value types that can be stored on the stack
 #[derive(Debug, Clone)]
@@ -81,7 +81,6 @@ impl Header {
     }
 }
 
-
 // Gas meter for tracking gas consumption
 pub struct GasMeter {
     pub remaining: u64,
@@ -135,6 +134,12 @@ pub struct QuantumVM {
     call_stack: Vec<usize>,
     halted: bool,
     gas_meter: GasMeter,
+}
+
+impl Default for QuantumVM {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl QuantumVM {
@@ -197,7 +202,8 @@ impl QuantumVM {
         if self.pc >= self.code.len() {
             return Err(VMError::InvalidAddress(format!(
                 "Program counter {} exceeds code length {}",
-                self.pc, self.code.len()
+                self.pc,
+                self.code.len()
             )));
         }
 
@@ -246,7 +252,8 @@ impl QuantumVM {
                 if b == 0 {
                     return Err(VMError::RuntimeError(format!(
                         "Division by zero: attempted to divide {} by 0 at PC {}",
-                        a, self.pc - 1
+                        a,
+                        self.pc - 1
                     )));
                 }
                 self.gas_meter.consume(5)?; // Division is more expensive
@@ -288,7 +295,9 @@ impl QuantumVM {
                 if addr >= self.code.len() {
                     return Err(VMError::InvalidAddress(format!(
                         "Jump target {} exceeds code length {} at PC {}",
-                        addr, self.code.len(), self.pc - 5
+                        addr,
+                        self.code.len(),
+                        self.pc - 5
                     )));
                 }
                 self.pc = addr;
@@ -301,7 +310,9 @@ impl QuantumVM {
                     if addr >= self.code.len() {
                         return Err(VMError::InvalidAddress(format!(
                             "JumpIf target {} exceeds code length {} at PC {}",
-                            addr, self.code.len(), self.pc - 5
+                            addr,
+                            self.code.len(),
+                            self.pc - 5
                         )));
                     }
                     self.pc = addr;
@@ -313,7 +324,9 @@ impl QuantumVM {
                 if addr >= self.code.len() {
                     return Err(VMError::InvalidAddress(format!(
                         "Call target {} exceeds code length {} at PC {}",
-                        addr, self.code.len(), self.pc - 5
+                        addr,
+                        self.code.len(),
+                        self.pc - 5
                     )));
                 }
                 self.call_stack.push(self.pc);
@@ -324,10 +337,8 @@ impl QuantumVM {
                 if let Some(return_addr) = self.call_stack.pop() {
                     self.pc = return_addr;
                 } else {
-                    return Err(VMError::RuntimeError(format!(
-                        "Return without call: call stack is empty at PC {}",
-                        self.pc - 1
-                    )));
+                    // Top-level return is treated as program completion.
+                    self.halted = true;
                 }
             }
             OpCode::Load => {
@@ -367,26 +378,13 @@ impl QuantumVM {
 
                 // Use ML-DSA-65 for verification
                 let signer = Sign::mldsa65();
-                let result = signer.verify(&message, &signature, &public_key)
+                let result = signer
+                    .verify(&message, &signature, &public_key)
                     .unwrap_or(false);
                 self.push(Value::Bool(result))?;
             }
             OpCode::MLKEMKeyExchange => {
-                // This opcode performs decapsulation as per the spec.
-                let private_key = self.pop()?.as_bytes()?.to_vec();
-                let ciphertext = self.pop()?.as_bytes()?.to_vec();
-
-                // Calculate gas cost: base + data cost + compute cost
-                // Base: 5000, Data: ~6 per byte, Compute: 14000
-                let data_cost = (private_key.len() + ciphertext.len()) as u64 * 6;
-                let gas_cost = 5000 + data_cost + 14000;
-                self.gas_meter.consume_pqc(gas_cost)?;
-
-                // Use ML-KEM-768 for key exchange
-                let kem = Kem::mlkem768();
-                let shared_secret = kem.decapsulate(&ciphertext, &private_key)
-                    .map_err(|e| VMError::CryptoError(format!("ML-KEM decapsulation failed: {:?}", e)))?;
-                self.push(Value::Bytes(shared_secret))?;
+                self.execute_kem_key_exchange(Kem::mlkem768(), "ML-KEM-768", 5000, 6, 14000)?;
             }
             OpCode::FNDSAVerify => {
                 let public_key = self.pop()?.as_bytes()?.to_vec();
@@ -401,7 +399,8 @@ impl QuantumVM {
 
                 // Use FN-DSA-512 for verification
                 let signer = Sign::fndsa512();
-                let result = signer.verify(&message, &signature, &public_key)
+                let result = signer
+                    .verify(&message, &signature, &public_key)
                     .unwrap_or(false);
                 self.push(Value::Bool(result))?;
             }
@@ -409,6 +408,15 @@ impl QuantumVM {
                 return Err(VMError::CryptoError(
                     "SLH-DSA is not enabled in this SynQ build".to_string(),
                 ));
+            }
+            OpCode::HQCKEM128KeyExchange => {
+                self.execute_kem_key_exchange(Kem::hqckem128(), "HQC-KEM-128", 6500, 7, 22000)?;
+            }
+            OpCode::HQCKEM192KeyExchange => {
+                self.execute_kem_key_exchange(Kem::hqckem192(), "HQC-KEM-192", 7000, 7, 26000)?;
+            }
+            OpCode::HQCKEM256KeyExchange => {
+                self.execute_kem_key_exchange(Kem::hqckem256(), "HQC-KEM-256", 7500, 7, 32000)?;
             }
             OpCode::Print => {
                 let value = self.pop()?;
@@ -419,6 +427,30 @@ impl QuantumVM {
             }
         }
 
+        Ok(())
+    }
+
+    fn execute_kem_key_exchange(
+        &mut self,
+        kem: Kem,
+        algorithm_name: &str,
+        base_cost: u64,
+        data_multiplier: u64,
+        compute_cost: u64,
+    ) -> Result<(), VMError> {
+        // This opcode performs decapsulation as per the VM contract interface.
+        let private_key = self.pop()?.as_bytes()?.to_vec();
+        let ciphertext = self.pop()?.as_bytes()?.to_vec();
+
+        // Dynamic gas model: base + byte-scaled cost + algorithm compute weight.
+        let data_cost = (private_key.len() + ciphertext.len()) as u64 * data_multiplier;
+        let gas_cost = base_cost + data_cost + compute_cost;
+        self.gas_meter.consume_pqc(gas_cost)?;
+
+        let shared_secret = kem.decapsulate(&ciphertext, &private_key).map_err(|e| {
+            VMError::CryptoError(format!("{algorithm_name} decapsulation failed: {:?}", e))
+        })?;
+        self.push(Value::Bytes(shared_secret))?;
         Ok(())
     }
 
@@ -436,24 +468,29 @@ impl QuantumVM {
 
     fn pop(&mut self) -> Result<Value, VMError> {
         self.gas_meter.consume(1)?; // Stack pop cost
-        self.stack.pop().ok_or_else(|| VMError::StackUnderflow(format!(
-            "Stack underflow: attempted to pop from empty stack at PC {}",
-            self.pc
-        )))
+        self.stack.pop().ok_or_else(|| {
+            VMError::StackUnderflow(format!(
+                "Stack underflow: attempted to pop from empty stack at PC {}",
+                self.pc
+            ))
+        })
     }
 
     fn peek(&self) -> Result<&Value, VMError> {
-        self.stack.last().ok_or_else(|| VMError::StackUnderflow(format!(
-            "Stack underflow: attempted to peek empty stack at PC {}",
-            self.pc
-        )))
+        self.stack.last().ok_or_else(|| {
+            VMError::StackUnderflow(format!(
+                "Stack underflow: attempted to peek empty stack at PC {}",
+                self.pc
+            ))
+        })
     }
 
     fn read_i32(&mut self) -> Result<i32, VMError> {
         if self.pc + 4 > self.code.len() {
             return Err(VMError::InvalidAddress(format!(
                 "Cannot read i32: need 4 bytes but only {} bytes remaining at PC {}",
-                self.code.len() - self.pc, self.pc
+                self.code.len() - self.pc,
+                self.pc
             )));
         }
         let bytes = [
@@ -470,7 +507,8 @@ impl QuantumVM {
         if self.pc + 4 > self.code.len() {
             return Err(VMError::InvalidAddress(format!(
                 "Cannot read u32: need 4 bytes but only {} bytes remaining at PC {}",
-                self.code.len() - self.pc, self.pc
+                self.code.len() - self.pc,
+                self.pc
             )));
         }
         let bytes = [
@@ -487,7 +525,9 @@ impl QuantumVM {
         if self.pc + len > self.code.len() {
             return Err(VMError::InvalidAddress(format!(
                 "Cannot read {} bytes: only {} bytes remaining at PC {}",
-                len, self.code.len() - self.pc, self.pc
+                len,
+                self.code.len() - self.pc,
+                self.pc
             )));
         }
         let bytes = self.code[self.pc..self.pc + len].to_vec();

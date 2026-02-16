@@ -3,18 +3,20 @@ members = [
     "vm",
     "compiler",
     "cli",
-    "pqsynq/pqsynq",
+    "tooling/no-std-smoke",
+    "tooling/wasm-runtime-smoke",
+    "aegis-pqsynq/pqsynq",
     # PQC crypto crates - internal dependencies
     "pqrust/pqrust-traits",
     "pqrust/pqrust-internals",
     "pqrust/pqrust-mlkem",
     "pqrust/pqrust-mldsa",
     "pqrust/pqrust-fndsa",
+    "pqrust/pqrust-hqckem",
 ]
 exclude = [
     "pqrust/pqrust",
     "pqrust/pqrust-slhdsa",
-    "pqrust/pqrust-hqckem",
     "pqrust/pqrust-cmce",
 ]
 resolver = "2"
@@ -26,3 +28,4 @@ pqrust-internals = { path = "pqrust/pqrust-internals" }
 pqrust-mlkem = { path = "pqrust/pqrust-mlkem" }
 pqrust-mldsa = { path = "pqrust/pqrust-mldsa" }
 pqrust-fndsa = { path = "pqrust/pqrust-fndsa" }
+pqrust-hqckem = { path = "pqrust/pqrust-hqckem" }

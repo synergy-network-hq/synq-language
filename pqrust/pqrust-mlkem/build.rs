@@ -13,12 +13,22 @@ macro_rules! build_clean {
         let target_dir: PathBuf = ["pqclean", "crypto_kem", $variant, "clean"]
             .iter()
             .collect();
+        let target = env::var("TARGET").unwrap_or_default();
+        if target == "wasm32-wasip1" {
+            builder.target("wasm32-wasi");
+        }
 
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
         if target_os == "wasi" {
-            let wasi_sdk_path =
-                &std::env::var("WASI_SDK_DIR").expect("missing environment variable: WASI_SDK_DIR");
-            builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            if let Ok(wasi_sdk_path) = std::env::var("WASI_SDK_DIR") {
+                builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            } else if let Ok(wasi_sysroot) = std::env::var("WASI_SYSROOT") {
+                builder.flag(format!("--sysroot={}", wasi_sysroot).as_str());
+            } else {
+                println!(
+                    "cargo:warning=WASI target detected but neither WASI_SDK_DIR nor WASI_SYSROOT is set; C compilation may fail."
+                );
+            }
         }
 
         let scheme_files = glob::glob(target_dir.join("*.c").to_str().unwrap()).unwrap();
@@ -43,12 +53,22 @@ macro_rules! build_avx2 {
 
         let mut builder = cc::Build::new();
         let target_dir: PathBuf = ["pqclean", "crypto_kem", $variant, "avx2"].iter().collect();
+        let target = env::var("TARGET").unwrap_or_default();
+        if target == "wasm32-wasip1" {
+            builder.target("wasm32-wasi");
+        }
 
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
         if target_os == "wasi" {
-            let wasi_sdk_path =
-                &std::env::var("WASI_SDK_DIR").expect("missing environment variable: WASI_SDK_DIR");
-            builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            if let Ok(wasi_sdk_path) = std::env::var("WASI_SDK_DIR") {
+                builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            } else if let Ok(wasi_sysroot) = std::env::var("WASI_SYSROOT") {
+                builder.flag(format!("--sysroot={}", wasi_sysroot).as_str());
+            } else {
+                println!(
+                    "cargo:warning=WASI target detected but neither WASI_SDK_DIR nor WASI_SYSROOT is set; C compilation may fail."
+                );
+            }
         }
 
         let scheme_files = glob::glob(target_dir.join("*.[csS]").to_str().unwrap()).unwrap();
@@ -87,12 +107,22 @@ macro_rules! build_aarch64 {
         let target_dir: PathBuf = ["pqclean", "crypto_kem", $variant, "aarch64"]
             .iter()
             .collect();
+        let target = env::var("TARGET").unwrap_or_default();
+        if target == "wasm32-wasip1" {
+            builder.target("wasm32-wasi");
+        }
 
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
         if target_os == "wasi" {
-            let wasi_sdk_path =
-                &std::env::var("WASI_SDK_DIR").expect("missing environment variable: WASI_SDK_DIR");
-            builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            if let Ok(wasi_sdk_path) = std::env::var("WASI_SDK_DIR") {
+                builder.flag(format!("--sysroot={}", wasi_sdk_path).as_str());
+            } else if let Ok(wasi_sysroot) = std::env::var("WASI_SYSROOT") {
+                builder.flag(format!("--sysroot={}", wasi_sysroot).as_str());
+            } else {
+                println!(
+                    "cargo:warning=WASI target detected but neither WASI_SDK_DIR nor WASI_SYSROOT is set; C compilation may fail."
+                );
+            }
         }
 
         let scheme_files = glob::glob(target_dir.join("*.[csS]").to_str().unwrap()).unwrap();
@@ -151,12 +181,10 @@ fn main() {
 
     println!("cargo::rustc-check-cfg=cfg(enable_x86_avx2)");
     if target_arch == "x86_64" && avx2_enabled && !is_windows && !is_macos {
-
         println!("cargo:rustc-cfg=enable_x86_avx2");
     }
     println!("cargo::rustc-check-cfg=cfg(enable_aarch64_neon)");
     if target_arch == "aarch64" && neon_enabled {
-
         println!("cargo:rustc-cfg=enable_aarch64_neon");
     }
 }

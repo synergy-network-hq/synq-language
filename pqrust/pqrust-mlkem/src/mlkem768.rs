@@ -1,4 +1,3 @@
-
 #[cfg(feature = "serialization")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
@@ -17,14 +16,12 @@ macro_rules! simple_struct {
         );
 
         impl $type {
-
             fn new() -> Self {
                 $type([0u8; $size])
             }
         }
 
         impl primitive::$type for $type {
-
             #[inline]
             fn as_bytes(&self) -> &[u8] {
                 &self.0
@@ -46,7 +43,6 @@ macro_rules! simple_struct {
         }
 
         impl PartialEq for $type {
-
             fn eq(&self, other: &Self) -> bool {
                 self.0
                     .iter()
@@ -82,19 +78,27 @@ pub const fn shared_secret_bytes() -> usize {
     ffi::PQCLEAN_MLKEM768_CLEAN_CRYPTO_BYTES
 }
 
+#[inline]
+fn ffi_result(operation: &'static str, code: i32) -> Result<()> {
+    if code == 0 {
+        Ok(())
+    } else {
+        Err(Error::FfiFailure { operation, code })
+    }
+}
+
 macro_rules! gen_keypair {
     ($variant:ident) => {{
         let mut pk = PublicKey::new();
         let mut sk = SecretKey::new();
-        assert_eq!(
-            unsafe { ffi::$variant(pk.0.as_mut_ptr(), sk.0.as_mut_ptr()) },
-            0
-        );
-        (pk, sk)
+        ffi_result("mlkem768_keypair", unsafe {
+            ffi::$variant(pk.0.as_mut_ptr(), sk.0.as_mut_ptr())
+        })
+        .map(|_| (pk, sk))
     }};
 }
 
-pub fn keypair() -> (PublicKey, SecretKey) {
+pub fn keypair() -> Result<(PublicKey, SecretKey)> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -103,7 +107,6 @@ pub fn keypair() -> (PublicKey, SecretKey) {
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
-
         if true {
             return gen_keypair!(PQCLEAN_MLKEM768_AARCH64_crypto_kem_keypair);
         }
@@ -115,15 +118,14 @@ macro_rules! encap {
     ($variant:ident, $pk:ident) => {{
         let mut ss = SharedSecret::new();
         let mut ct = Ciphertext::new();
-        assert_eq!(
-            unsafe { ffi::$variant(ct.0.as_mut_ptr(), ss.0.as_mut_ptr(), $pk.0.as_ptr()) },
-            0,
-        );
-        (ss, ct)
+        ffi_result("mlkem768_encapsulate", unsafe {
+            ffi::$variant(ct.0.as_mut_ptr(), ss.0.as_mut_ptr(), $pk.0.as_ptr())
+        })
+        .map(|_| (ss, ct))
     }};
 }
 
-pub fn encapsulate(pk: &PublicKey) -> (SharedSecret, Ciphertext) {
+pub fn encapsulate(pk: &PublicKey) -> Result<(SharedSecret, Ciphertext)> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -142,15 +144,14 @@ pub fn encapsulate(pk: &PublicKey) -> (SharedSecret, Ciphertext) {
 macro_rules! decap {
     ($variant:ident, $ct:ident, $sk:ident) => {{
         let mut ss = SharedSecret::new();
-        assert_eq!(
-            unsafe { ffi::$variant(ss.0.as_mut_ptr(), $ct.0.as_ptr(), $sk.0.as_ptr(),) },
-            0
-        );
-        ss
+        ffi_result("mlkem768_decapsulate", unsafe {
+            ffi::$variant(ss.0.as_mut_ptr(), $ct.0.as_ptr(), $sk.0.as_ptr())
+        })
+        .map(|_| ss)
     }};
 }
 
-pub fn decapsulate(ct: &Ciphertext, sk: &SecretKey) -> SharedSecret {
+pub fn decapsulate(ct: &Ciphertext, sk: &SecretKey) -> Result<SharedSecret> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -172,9 +173,9 @@ mod test {
 
     #[test]
     pub fn test_kem() {
-        let (pk, sk) = keypair();
-        let (ss1, ct) = encapsulate(&pk);
-        let ss2 = decapsulate(&ct, &sk);
+        let (pk, sk) = keypair().expect("ML-KEM-768 keypair should succeed");
+        let (ss1, ct) = encapsulate(&pk).expect("ML-KEM-768 encapsulation should succeed");
+        let ss2 = decapsulate(&ct, &sk).expect("ML-KEM-768 decapsulation should succeed");
         assert_eq!(&ss1.0[..], &ss2.0[..], "Difference in shared secrets!");
     }
 }

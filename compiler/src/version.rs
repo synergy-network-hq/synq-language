@@ -1,7 +1,7 @@
 //! Version requirement parsing and validation for SynQ compiler
 
-use std::str::FromStr;
 use std::cmp::Ordering;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Version {
@@ -19,18 +19,25 @@ impl FromStr for Version {
             return Err(format!("Invalid version format: {}", s));
         }
 
-        let major = parts[0].parse::<u32>()
+        let major = parts[0]
+            .parse::<u32>()
             .map_err(|_| format!("Invalid major version: {}", parts[0]))?;
-        let minor = parts[1].parse::<u32>()
+        let minor = parts[1]
+            .parse::<u32>()
             .map_err(|_| format!("Invalid minor version: {}", parts[1]))?;
         let patch = if parts.len() == 3 {
-            parts[2].parse::<u32>()
+            parts[2]
+                .parse::<u32>()
                 .map_err(|_| format!("Invalid patch version: {}", parts[2]))?
         } else {
             0
         };
 
-        Ok(Version { major, minor, patch })
+        Ok(Version {
+            major,
+            minor,
+            patch,
+        })
     }
 }
 
@@ -58,8 +65,8 @@ impl VersionRequirement {
             "^" => {
                 // Caret: compatible within same major version
                 // ^1.0.0 matches >=1.0.0 <2.0.0
-                Ok(compiler_version >= &self.version &&
-                   compiler_version.major == self.version.major)
+                Ok(compiler_version >= &self.version
+                    && compiler_version.major == self.version.major)
             }
             ">=" => Ok(compiler_version >= &self.version),
             "<=" => Ok(compiler_version <= &self.version),
@@ -76,7 +83,7 @@ impl FromStr for VersionRequirement {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
-        
+
         if s.starts_with('^') {
             let version_str = &s[1..];
             let version = Version::from_str(version_str)?;

@@ -1,4 +1,3 @@
-
 #[cfg(feature = "serialization")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
@@ -9,8 +8,6 @@ use alloc::vec::Vec;
 use pqrust_traits::sign as primitive;
 use pqrust_traits::{Error, Result};
 
-use paste::paste;
-
 macro_rules! simple_struct {
     ($type: ident, $size: expr) => {
         #[derive(Clone, Copy)]
@@ -20,14 +17,12 @@ macro_rules! simple_struct {
         );
 
         impl $type {
-
             fn new() -> Self {
                 $type([0u8; $size])
             }
         }
 
         impl primitive::$type for $type {
-
             #[inline]
             fn as_bytes(&self) -> &[u8] {
                 &self.0
@@ -49,7 +44,6 @@ macro_rules! simple_struct {
         }
 
         impl PartialEq for $type {
-
             fn eq(&self, other: &Self) -> bool {
                 self.0
                     .iter()
@@ -79,7 +73,6 @@ impl DetachedSignature {
 }
 
 impl primitive::DetachedSignature for DetachedSignature {
-
     #[inline]
     fn as_bytes(&self) -> &[u8] {
         &self.0[..self.1]
@@ -106,7 +99,6 @@ impl primitive::DetachedSignature for DetachedSignature {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct SignedMessage(Vec<u8>);
 impl primitive::SignedMessage for SignedMessage {
-
     #[inline]
     fn as_bytes(&self) -> &[u8] {
         self.0.as_slice()
@@ -136,19 +128,25 @@ pub const fn signature_bytes() -> usize {
     ffi::PQCLEAN_MLDSA65_CLEAN_CRYPTO_BYTES
 }
 
+fn ffi_result(operation: &'static str, code: i32) -> Result<()> {
+    if code == 0 {
+        Ok(())
+    } else {
+        Err(Error::FfiFailure { operation, code })
+    }
+}
+
 macro_rules! gen_keypair {
     ($variant:ident) => {{
         let mut pk = PublicKey::new();
         let mut sk = SecretKey::new();
-        assert_eq!(
-            unsafe { ffi::$variant(pk.0.as_mut_ptr(), sk.0.as_mut_ptr()) },
-            0
-        );
-        (pk, sk)
+        let rc = unsafe { ffi::$variant(pk.0.as_mut_ptr(), sk.0.as_mut_ptr()) };
+        ffi_result(stringify!($variant), rc)?;
+        Ok((pk, sk))
     }};
 }
 
-pub fn keypair() -> (PublicKey, SecretKey) {
+pub fn keypair() -> Result<(PublicKey, SecretKey)> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -157,7 +155,6 @@ pub fn keypair() -> (PublicKey, SecretKey) {
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
-
         if true {
             return gen_keypair!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_keypair);
         }
@@ -170,21 +167,27 @@ macro_rules! gen_signature {
         let max_len = $msg.len() + signature_bytes();
         let mut signed_msg = Vec::with_capacity(max_len);
         let mut smlen: usize = 0;
-        unsafe {
-            paste! {
-                ffi::[<$variant _ctx>](
+        let rc = unsafe {
+            ffi::$variant(
                 signed_msg.as_mut_ptr(),
                 &mut smlen as *mut usize,
                 $msg.as_ptr(),
                 $msg.len(),
-                core::ptr::null(), 0,
+                core::ptr::null(),
+                0,
                 $sk.0.as_ptr(),
-            );
-            }
-            debug_assert!(smlen <= max_len, "exceeded vector capacity");
-            signed_msg.set_len(smlen);
+            )
+        };
+        ffi_result(stringify!($variant), rc)?;
+        if smlen > max_len {
+            return Err(Error::BadLength {
+                name: "SignedMessage",
+                actual: smlen,
+                expected: max_len,
+            });
         }
-        SignedMessage(signed_msg)
+        unsafe { signed_msg.set_len(smlen) };
+        Ok(SignedMessage(signed_msg))
     }};
 }
 
@@ -193,7 +196,7 @@ macro_rules! gen_signature_ctx {
         let max_len = $msg.len() + signature_bytes();
         let mut signed_msg = Vec::with_capacity(max_len);
         let mut smlen: usize = 0;
-        unsafe {
+        let rc = unsafe {
             ffi::$variant(
                 signed_msg.as_mut_ptr(),
                 &mut smlen as *mut usize,
@@ -202,31 +205,38 @@ macro_rules! gen_signature_ctx {
                 $ctx.as_ptr(),
                 $ctx.len(),
                 $sk.0.as_ptr(),
-            );
-            debug_assert!(smlen <= max_len, "exceeded vector capacity");
-            signed_msg.set_len(smlen);
+            )
+        };
+        ffi_result(stringify!($variant), rc)?;
+        if smlen > max_len {
+            return Err(Error::BadLength {
+                name: "SignedMessage",
+                actual: smlen,
+                expected: max_len,
+            });
         }
-        SignedMessage(signed_msg)
+        unsafe { signed_msg.set_len(smlen) };
+        Ok(SignedMessage(signed_msg))
     }};
 }
 
-pub fn sign(msg: &[u8], sk: &SecretKey) -> SignedMessage {
+pub fn sign(msg: &[u8], sk: &SecretKey) -> Result<SignedMessage> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
-            return gen_signature!(PQCLEAN_MLDSA65_AVX2_crypto_sign, msg, sk);
+            return gen_signature!(PQCLEAN_MLDSA65_AVX2_crypto_sign_ctx, msg, sk);
         }
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
         if true {
-            return gen_signature!(PQCLEAN_MLDSA65_AARCH64_crypto_sign, msg, sk);
+            return gen_signature!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_ctx, msg, sk);
         }
     }
-    gen_signature!(PQCLEAN_MLDSA65_CLEAN_crypto_sign, msg, sk)
+    gen_signature!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_ctx, msg, sk)
 }
 
-pub fn sign_ctx(msg: &[u8], ctx: &[u8], sk: &SecretKey) -> SignedMessage {
+pub fn sign_ctx(msg: &[u8], ctx: &[u8], sk: &SecretKey) -> Result<SignedMessage> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -247,14 +257,15 @@ macro_rules! open_signed {
         let mut m: Vec<u8> = Vec::with_capacity($sm.len());
         let mut mlen: usize = 0;
         match unsafe {
-            paste! { ffi:: [<$variant _ctx>] (
+            ffi::$variant(
                 m.as_mut_ptr(),
                 &mut mlen as *mut usize,
                 $sm.0.as_ptr(),
                 $sm.len(),
-                core::ptr::null() as *const u8, 0,
+                core::ptr::null(),
+                0,
                 $pk.0.as_ptr(),
-            )}
+            )
         } {
             0 => {
                 unsafe { m.set_len(mlen) };
@@ -298,16 +309,16 @@ pub fn open(
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
-            return open_signed!(PQCLEAN_MLDSA65_AVX2_crypto_sign_open, sm, pk);
+            return open_signed!(PQCLEAN_MLDSA65_AVX2_crypto_sign_open_ctx, sm, pk);
         }
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
         if true {
-            return open_signed!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_open, sm, pk);
+            return open_signed!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_open_ctx, sm, pk);
         }
     }
-    open_signed!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_open, sm, pk)
+    open_signed!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_open_ctx, sm, pk)
 }
 
 pub fn open_ctx(
@@ -333,26 +344,33 @@ pub fn open_ctx(
 macro_rules! detached_signature {
     ($variant:ident, $msg:ident, $sk:ident) => {{
         let mut sig = DetachedSignature::new();
-        unsafe {
-            paste! {
-                ffi:: [<$variant _ctx >](
-                    sig.0.as_mut_ptr(),
-                    &mut sig.1 as *mut usize,
-                    $msg.as_ptr(),
-                    $msg.len(),
-                    core::ptr::null(), 0,
-                    $sk.0.as_ptr(),
-                );
-            }
+        let rc = unsafe {
+            ffi::$variant(
+                sig.0.as_mut_ptr(),
+                &mut sig.1 as *mut usize,
+                $msg.as_ptr(),
+                $msg.len(),
+                core::ptr::null(),
+                0,
+                $sk.0.as_ptr(),
+            )
+        };
+        ffi_result(stringify!($variant), rc)?;
+        if sig.1 > signature_bytes() {
+            return Err(Error::BadLength {
+                name: "DetachedSignature",
+                actual: sig.1,
+                expected: signature_bytes(),
+            });
         }
-        sig
+        Ok(sig)
     }};
 }
 
 macro_rules! detached_signature_ctx {
     ($variant:ident, $msg:ident, $ctx:ident, $sk:ident) => {{
         let mut sig = DetachedSignature::new();
-        unsafe {
+        let rc = unsafe {
             ffi::$variant(
                 sig.0.as_mut_ptr(),
                 &mut sig.1 as *mut usize,
@@ -361,29 +379,37 @@ macro_rules! detached_signature_ctx {
                 $ctx.as_ptr(),
                 $ctx.len(),
                 $sk.0.as_ptr(),
-            );
+            )
+        };
+        ffi_result(stringify!($variant), rc)?;
+        if sig.1 > signature_bytes() {
+            return Err(Error::BadLength {
+                name: "DetachedSignature",
+                actual: sig.1,
+                expected: signature_bytes(),
+            });
         }
-        sig
+        Ok(sig)
     }};
 }
 
-pub fn detached_sign(msg: &[u8], sk: &SecretKey) -> DetachedSignature {
+pub fn detached_sign(msg: &[u8], sk: &SecretKey) -> Result<DetachedSignature> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
-            return detached_signature!(PQCLEAN_MLDSA65_AVX2_crypto_sign_signature, msg, sk);
+            return detached_signature!(PQCLEAN_MLDSA65_AVX2_crypto_sign_signature_ctx, msg, sk);
         }
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
         if true {
-            return detached_signature!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_signature, msg, sk);
+            return detached_signature!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_signature_ctx, msg, sk);
         }
     }
-    detached_signature!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_signature, msg, sk)
+    detached_signature!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_signature_ctx, msg, sk)
 }
 
-pub fn detached_sign_ctx(msg: &[u8], ctx: &[u8], sk: &SecretKey) -> DetachedSignature {
+pub fn detached_sign_ctx(msg: &[u8], ctx: &[u8], sk: &SecretKey) -> Result<DetachedSignature> {
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
@@ -417,16 +443,15 @@ pub fn detached_sign_ctx(msg: &[u8], ctx: &[u8], sk: &SecretKey) -> DetachedSign
 macro_rules! verify_detached_sig {
     ($variant:ident, $sig:ident, $msg:ident, $pk:ident) => {{
         let res = unsafe {
-            paste! {
-                ffi:: [<$variant _ctx >](
-                    $sig.0.as_ptr(),
-                    $sig.1,
-                    $msg.as_ptr(),
-                    $msg.len(),
-                    core::ptr::null(), 0,
-                    $pk.0.as_ptr(),
-                )
-            }
+            ffi::$variant(
+                $sig.0.as_ptr(),
+                $sig.1,
+                $msg.as_ptr(),
+                $msg.len(),
+                core::ptr::null(),
+                0,
+                $pk.0.as_ptr(),
+            )
         };
         match res {
             0 => Ok(()),
@@ -465,16 +490,26 @@ pub fn verify_detached_signature(
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
-            return verify_detached_sig!(PQCLEAN_MLDSA65_AVX2_crypto_sign_verify, sig, msg, pk);
+            return verify_detached_sig!(
+                PQCLEAN_MLDSA65_AVX2_crypto_sign_verify_ctx,
+                sig,
+                msg,
+                pk
+            );
         }
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
         if true {
-            return verify_detached_sig!(PQCLEAN_MLDSA65_AARCH64_crypto_sign_verify, sig, msg, pk);
+            return verify_detached_sig!(
+                PQCLEAN_MLDSA65_AARCH64_crypto_sign_verify_ctx,
+                sig,
+                msg,
+                pk
+            );
         }
     }
-    verify_detached_sig!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_verify, sig, msg, pk)
+    verify_detached_sig!(PQCLEAN_MLDSA65_CLEAN_crypto_sign_verify_ctx, sig, msg, pk)
 }
 
 pub fn verify_detached_signature_ctx(
@@ -527,8 +562,8 @@ mod test {
         let len: u16 = rng.random();
 
         let message = (0..len).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
-        let (pk, sk) = keypair();
-        let sm = sign(&message, &sk);
+        let (pk, sk) = keypair().expect("ML-DSA-65 keypair should succeed");
+        let sm = sign(&message, &sk).expect("ML-DSA-65 signing should succeed");
         let verifiedmsg = open(&sm, &pk).unwrap();
         assert!(verifiedmsg == message);
     }
@@ -539,8 +574,8 @@ mod test {
         let len: u16 = rng.random();
         let message = (0..len).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
 
-        let (pk, sk) = keypair();
-        let sig = detached_sign(&message, &sk);
+        let (pk, sk) = keypair().expect("ML-DSA-65 keypair should succeed");
+        let sig = detached_sign(&message, &sk).expect("ML-DSA-65 detached sign should succeed");
         assert!(verify_detached_signature(&sig, &message, &pk).is_ok());
         assert!(!verify_detached_signature(&sig, &message[..message.len() - 1], &pk).is_ok());
     }
@@ -552,8 +587,8 @@ mod test {
         let ctx = (0..10).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
 
         let message = (0..len).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
-        let (pk, sk) = keypair();
-        let sm = sign_ctx(&message, &ctx, &sk);
+        let (pk, sk) = keypair().expect("ML-DSA-65 keypair should succeed");
+        let sm = sign_ctx(&message, &ctx, &sk).expect("ML-DSA-65 contextual sign should succeed");
         let verifiedmsg = open_ctx(&sm, &ctx, &pk).unwrap();
         assert!(verifiedmsg == message);
         assert!(open(&sm, &pk).is_err());
@@ -566,8 +601,9 @@ mod test {
         let message = (0..len).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
         let ctx = (0..10).map(|_| rng.random::<u8>()).collect::<Vec<_>>();
 
-        let (pk, sk) = keypair();
-        let sig = detached_sign_ctx(&message, &ctx, &sk);
+        let (pk, sk) = keypair().expect("ML-DSA-65 keypair should succeed");
+        let sig = detached_sign_ctx(&message, &ctx, &sk)
+            .expect("ML-DSA-65 contextual detached sign should succeed");
         assert!(verify_detached_signature_ctx(&sig, &message, &ctx, &pk).is_ok());
         assert!(
             !verify_detached_signature_ctx(&sig, &message[..message.len() - 1], &ctx, &pk).is_ok()

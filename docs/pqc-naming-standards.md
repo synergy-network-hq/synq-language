@@ -7,11 +7,13 @@ Consistency here is not optional—it is a governance requirement.
 ---
 
 ## Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM)
+
 **Formerly:** CRYSTALS-Kyber
 
-### Formal Naming Rules
+### Formal ML-KEM Naming Rules
 
 **In documentation and code comments**, ML-KEM must be written as one of the following:
+
 - ML-KEM
 - ML-KEM-512
 - ML-KEM-768
@@ -19,27 +21,30 @@ Consistency here is not optional—it is a governance requirement.
 - Module-Lattice-Based Key-Encapsulation Mechanism
 
 **In file names and actual code**, ML-KEM must be written as:
+
 - mlkem
 - mlkem512
 - mlkem768
 - mlkem1024
 
-### NIST Security Level Mapping
+### NIST Security Level Mapping - ML-KEM
 
-| Variant | Security Level | Recommended Use Case |
-|-------|----------------|----------------------|
-| ML-KEM-512 | Level 1 | Optimized for resource-constrained devices and IoT environments requiring efficient key exchange with strong baseline post-quantum protection. |
-| ML-KEM-768 | Level 3 | Standard enterprise-grade configuration for general-purpose encryption and secure channel establishment. |
-| ML-KEM-1024 | Level 5 | Highest-security configuration for critical infrastructure, national-security, or long-term data confidentiality applications. |
+| Variant    | Security Level | Recommended Use Case                                                                                                                           |
+|------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| ML-KEM-512 | Level 1        | Optimized for resource-constrained devices and IoT environments requiring efficient key exchange with strong baseline post-quantum protection. |
+| ML-KEM-768 | Level 3        | Standard enterprise-grade configuration for general-purpose encryption and secure channel establishment.                                       |
+| ML-KEM-1024| Level 5        | Highest-security configuration for critical infrastructure, national-security, or long-term data confidentiality applications.                 |
 
 ---
 
 ## Module-Lattice-Based Digital Signature Algorithm (ML-DSA)
+
 **Formerly:** CRYSTALS-Dilithium
 
-### Formal Naming Rules
+### Formal ML-DSA Naming Rules
 
 **In documentation and code comments**, ML-DSA must be written as:
+
 - ML-DSA
 - ML-DSA-44
 - ML-DSA-65
@@ -47,60 +52,66 @@ Consistency here is not optional—it is a governance requirement.
 - Module-Lattice-Based Digital Signature Algorithm
 
 **In file names and actual code**, ML-DSA must be written as:
+
 - mldsa
 - mldsa44
 - mldsa65
 - mldsa87
 
-### NIST Security Level Mapping
+### NIST Security Level Mapping - ML-DSA
 
-| Variant | Security Level | Recommended Use Case |
-|--------|----------------|----------------------|
-| ML-DSA-44 | Level 2 | Suitable for embedded systems, firmware signing, or applications requiring compact signatures with moderate security. |
-| ML-DSA-65 | Level 3 | Balanced performance for most production environments, including blockchain smart-contract signing and digital identity systems. |
-| ML-DSA-87 | Level 5 | Maximum-security configuration ideal for root certificate authorities, secure boot chains, and long-term signature validation. |
+| Variant   | Security Level | Recommended Use Case                                                                                                             |
+|-----------|----------------|----------------------------------------------------------------------------------------------------------------------------------|
+| ML-DSA-44 | Level 2        | Suitable for embedded systems, firmware signing, or applications requiring compact signatures with moderate security.            |
+| ML-DSA-65 | Level 3        | Balanced performance for most production environments, including blockchain smart-contract signing and digital identity systems. |
+| ML-DSA-87 | Level 5        | Maximum-security configuration ideal for root certificate authorities, secure boot chains, and long-term signature validation.   |
 
 ---
 
 ## Stateless Hash-Based Digital Signature Algorithm (SLH-DSA)
+
 **Formerly:** SPHINCS+
 
-### Formal Naming Rules
+### Formal SLH-DSA Naming Rules
 
 **In documentation and code comments**, SLH-DSA must be written as:
+
 - Stateless Hash-Based Digital Signature Algorithm
 - SLH-DSA
 - Explicit variant names as standardized by NIST
 
 **In file names and actual code**, SLH-DSA must be written as lowercase `slhdsa` with the full parameter suffix.
 
-### NIST Security Level Mapping
+### NIST Security Level Mapping - SLH-DSA
 
 | Variant Group | Security Level | Recommended Use Case |
-|--------------|----------------|----------------------|
-| 128f / 128s | Level 1 | Fast or compact variants for constrained or bandwidth-sensitive systems. |
-| 192f / 192s | Level 3 | Balanced trade-offs for enterprise authentication or firmware signing. |
-| 256f / 256s | Level 5 | High-assurance signatures for critical security and archival trust anchors. |
+|---------------|----------------|----------------------|
+| 128f / 128s   | Level 1        | Fast or compact variants for constrained or bandwidth-sensitive systems. |
+| 192f / 192s   | Level 3        | Balanced trade-offs for enterprise authentication or firmware signing. |
+| 256f / 256s   | Level 5        | High-assurance signatures for critical security and archival trust anchors. |
 
 ---
 
-## FFT over NTRU-Lattice-Based Digital Signature Algorithm (FN-DSA)
+## FFT (Fast-Fourier Transform) over NTRU-Lattice-Based Digital Signature Algorithm (FN-DSA)
+
 **Formerly:** Falcon
 
-### Formal Naming Rules
+### Formal FN-DSA Naming Rules
 
 **In documentation and code comments**, FN-DSA must be written as:
+
 - FN-DSA
 - FN-DSA-512
 - FN-DSA-1024
-- FFT over NTRU-Lattice-Based Digital Signature Algorithm
+- FFT (Fast-Fourier Transform) over NTRU-Lattice-Based Digital Signature Algorithm
 
 **In file names and actual code**, FN-DSA must be written as:
+
 - fndsa
 - fndsa512
 - fndsa1024
 
-### NIST Security Level Mapping
+### NIST Security Level Mapping - FN-DSA
 
 | Variant | Security Level | Recommended Use Case |
 |--------|----------------|----------------------|
@@ -111,9 +122,10 @@ Consistency here is not optional—it is a governance requirement.
 
 ## Hamming Quasi-Cyclic Key Encapsulation Mechanism (HQC-KEM)
 
-### Formal Naming Rules
+### Formal HQC-KEM Naming Rules
 
 **In documentation and code comments**, HQC-KEM must be written as:
+
 - HQC-KEM
 - HQC-KEM-128
 - HQC-KEM-192
@@ -121,12 +133,13 @@ Consistency here is not optional—it is a governance requirement.
 - Hamming Quasi-Cyclic Key Encapsulation Mechanism
 
 **In file names and actual code**, HQC-KEM must be written as:
+
 - hqckem
 - hqckem128
 - hqckem192
 - hqckem256
 
-### NIST Security Level Mapping
+### NIST Security Level Mapping - HQC-KEM
 
 | Variant | Security Level | Recommended Use Case |
 |--------|----------------|----------------------|
@@ -141,6 +154,7 @@ Consistency here is not optional—it is a governance requirement.
 ### Formal Naming Rules
 
 **In documentation and code comments**, Classic McEliece must be written as:
+
 - Classic-McEliece
 - Classic-McEliece-348864
 - Classic-McEliece-460896
@@ -150,6 +164,7 @@ Consistency here is not optional—it is a governance requirement.
 - Classic McEliece Key Encapsulation Mechanism
 
 **In file names and actual code**, Classic McEliece must be written as:
+
 - cmce
 - cmce348864
 - cmce460896

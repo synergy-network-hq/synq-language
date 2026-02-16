@@ -2,14 +2,16 @@
 extern crate pest_derive;
 
 pub mod ast;
-pub mod parser;
 pub mod codegen;
-pub mod solidity_gen;
+pub mod parser;
 pub mod pqc_integration;
+pub mod semantic;
+pub mod solidity_gen;
 pub mod version;
 
 pub use codegen::CodeGenerator;
-pub use solidity_gen::SolidityGenerator;
 pub use parser::parse;
 pub use pqc_integration::PqcIntegration;
-pub use version::{Version, VersionRequirement, get_compiler_version};
+pub use semantic::analyze;
+pub use solidity_gen::SolidityGenerator;
+pub use version::{get_compiler_version, Version, VersionRequirement};

@@ -1,0 +1,15 @@
+{
+  "name": "synq-sdk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:integration": "tsx --test tests/integration.test.ts"
+  },
+  "dependencies": {
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "tsx": "^4.19.3"
+  }
+}

@@ -7,6 +7,12 @@ pub struct Assembler {
     data: Vec<u8>,
 }
 
+impl Default for Assembler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Assembler {
     pub fn new() -> Self {
         Assembler {

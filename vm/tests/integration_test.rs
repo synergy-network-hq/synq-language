@@ -1,5 +1,5 @@
+use pqsynq::{DigitalSignature, Kem, KeyEncapsulation, Sign};
 use quantumvm::{Assembler, OpCode, QuantumVM};
-use pqsynq::{DigitalSignature, KeyEncapsulation, Kem, Sign};
 
 #[test]
 fn test_basic_arithmetic() {
@@ -23,7 +23,7 @@ fn test_basic_arithmetic() {
 #[test]
 fn test_mldsa_verify() {
     let mut assembler = Assembler::new();
-    
+
     // Generate real keypair and signature using pqsynq
     let signer = Sign::mldsa65();
     let (pk, sk) = signer.keygen().unwrap();
@@ -55,13 +55,13 @@ fn test_mldsa_verify() {
     vm.execute().unwrap();
 
     let result = vm.stack.pop().unwrap().as_bool().unwrap();
-    assert_eq!(result, true);
+    assert!(result);
 }
 
 #[test]
 fn test_mlkem_decaps() {
     let mut assembler = Assembler::new();
-    
+
     // Generate real keypair and encapsulate using pqsynq
     let kem = Kem::mlkem768();
     let (pk, sk) = kem.keygen().unwrap();
@@ -89,4 +89,43 @@ fn test_mlkem_decaps() {
 
     let shared_secret = vm.stack.pop().unwrap().as_bytes().unwrap().to_vec();
     assert_eq!(shared_secret.len(), 32); // ML-KEM-768 shared secret is 32 bytes
+}
+
+fn run_hqckem_decaps_test(opcode: OpCode, kem: Kem) {
+    let mut assembler = Assembler::new();
+
+    let (pk, sk) = kem.keygen().unwrap();
+    let (ct, ss1) = kem.encapsulate(&pk).unwrap();
+
+    // The VM pops arguments as: private_key, ciphertext.
+    // So we must push: ciphertext, private_key.
+    assembler.emit_op(OpCode::LoadImm);
+    assembler.emit_bytes(&ct);
+    assembler.emit_op(OpCode::LoadImm);
+    assembler.emit_bytes(&sk);
+    assembler.emit_op(opcode);
+    assembler.emit_op(OpCode::Halt);
+
+    let bytecode = assembler.build();
+    let mut vm = QuantumVM::new();
+    vm.load_bytecode(&bytecode).unwrap();
+    vm.execute().unwrap();
+
+    let ss2 = vm.stack.pop().unwrap().as_bytes().unwrap().to_vec();
+    assert_eq!(ss1, ss2);
+}
+
+#[test]
+fn test_hqckem128_decaps() {
+    run_hqckem_decaps_test(OpCode::HQCKEM128KeyExchange, Kem::hqckem128());
+}
+
+#[test]
+fn test_hqckem192_decaps() {
+    run_hqckem_decaps_test(OpCode::HQCKEM192KeyExchange, Kem::hqckem192());
+}
+
+#[test]
+fn test_hqckem256_decaps() {
+    run_hqckem_decaps_test(OpCode::HQCKEM256KeyExchange, Kem::hqckem256());
 }

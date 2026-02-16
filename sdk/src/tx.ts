@@ -1,6 +1,6 @@
 // sdk/src/tx.ts
 
-import { base58Encode } from './keys';
+import { encodeBase58 } from './encoding';
 
 export class Transaction {
   from: string;
@@ -48,7 +48,7 @@ export class Transaction {
   async hash(): Promise<string> {
     const data = this.serialize();
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    return base58Encode(new Uint8Array(hashBuffer));
+    return encodeBase58(new Uint8Array(hashBuffer));
   }
 
   setSignature(sig: Uint8Array) {

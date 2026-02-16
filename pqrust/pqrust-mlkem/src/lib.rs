@@ -1,4 +1,3 @@
-
 #![no_std]
 #![allow(clippy::len_without_is_empty)]
 

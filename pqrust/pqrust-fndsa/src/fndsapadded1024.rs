@@ -1,4 +1,3 @@
-
 #[cfg(feature = "serialization")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
@@ -18,18 +17,16 @@ macro_rules! simple_struct {
         );
 
         impl $type {
-
             fn new() -> Self {
                 $type([0u8; $size])
             }
         }
 
-	        impl primitive::$type for $type {
-
-	            #[inline]
-	            fn as_bytes(&self) -> &[u8] {
-	                &self.0
-	            }
+        impl primitive::$type for $type {
+            #[inline]
+            fn as_bytes(&self) -> &[u8] {
+                &self.0
+            }
 
             fn from_bytes(bytes: &[u8]) -> Result<Self> {
                 if bytes.len() != $size {
@@ -47,7 +44,6 @@ macro_rules! simple_struct {
         }
 
         impl PartialEq for $type {
-
             fn eq(&self, other: &Self) -> bool {
                 self.0
                     .iter()
@@ -83,7 +79,6 @@ impl DetachedSignature {
 }
 
 impl primitive::DetachedSignature for DetachedSignature {
-
     #[inline]
     fn as_bytes(&self) -> &[u8] {
         &self.0[..self.1]
@@ -110,7 +105,6 @@ impl primitive::DetachedSignature for DetachedSignature {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct SignedMessage(Vec<u8>);
 impl primitive::SignedMessage for SignedMessage {
-
     #[inline]
     fn as_bytes(&self) -> &[u8] {
         self.0.as_slice()
@@ -161,7 +155,6 @@ pub fn keypair() -> (PublicKey, SecretKey) {
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
     {
-
         if true {
             return gen_keypair!(PQCLEAN_FALCONPADDED1024_AARCH64_crypto_sign_keypair);
         }

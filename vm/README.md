@@ -79,7 +79,10 @@ These opcodes are specifically designed to handle post-quantum cryptographic pri
 | `0x80` | `MLDSA_VERIFY`       | Verifies an ML-DSA signature. Expects public key, message, and signature on stack. Pushes boolean result. | `pubkey, msg, sig -> bool` |
 | `0x81` | `MLKEM_KEY_EXCHANGE` | Performs ML-KEM decapsulation. Expects private key and ciphertext on stack. Pushes shared secret.      | `privkey, ciphertext -> shared_secret` |
 | `0x82` | `FNDSA_VERIFY`       | Verifies an FN-DSA signature. Expects public key, message, and signature on stack. Pushes boolean result. | `pubkey, msg, sig -> bool` |
-| `0x83` | `SLHDSA_VERIFY`      | Verifies an SLH-DSA signature. Expects public key, message, and signature on stack. Pushes boolean result. | `pubkey, msg, sig -> bool` |
+| `0x83` | `SLHDSA_VERIFY`      | Reserved opcode. SLH-DSA is currently disabled in this SynQ profile and returns runtime error if executed. | `pubkey, msg, sig -> error` |
+| `0x84` | `HQCKEM128_KEY_EXCHANGE` | Performs HQC-KEM-128 decapsulation. Expects private key and ciphertext on stack. Pushes shared secret. | `privkey, ciphertext -> shared_secret` |
+| `0x85` | `HQCKEM192_KEY_EXCHANGE` | Performs HQC-KEM-192 decapsulation. Expects private key and ciphertext on stack. Pushes shared secret. | `privkey, ciphertext -> shared_secret` |
+| `0x86` | `HQCKEM256_KEY_EXCHANGE` | Performs HQC-KEM-256 decapsulation. Expects private key and ciphertext on stack. Pushes shared secret. | `privkey, ciphertext -> shared_secret` |
 
 ### 3.7. Environmental Information
 
@@ -91,7 +94,13 @@ These opcodes are specifically designed to handle post-quantum cryptographic pri
 
 ## 4. Gas Model Considerations for PQC Opcodes
 
-The gas cost for `MLDSA_VERIFY`, `FNDSA_VERIFY`, `SLHDSA_VERIFY`, and `MLKEM_KEY_EXCHANGE` will be significantly higher and dynamically calculated based on the specific parameters (e.g., security level, key/signature size) of the PQC algorithm being used. This ensures that the computational burden of these operations is accurately reflected in transaction fees, preventing network abuse and incentivizing efficient contract design. The exact gas costs will be determined through empirical benchmarking of the underlying cryptographic libraries.
+The gas cost for PQC opcodes (`MLDSA_VERIFY`, `FNDSA_VERIFY`, `MLKEM_KEY_EXCHANGE`, `HQCKEM128_KEY_EXCHANGE`, `HQCKEM192_KEY_EXCHANGE`, `HQCKEM256_KEY_EXCHANGE`) is significantly higher and dynamically computed as:
+
+- base cost
+- data-size cost (per-byte multiplier over key/ciphertext/signature inputs)
+- algorithm compute cost
+
+This ensures that computational burden and input size are priced into transaction execution, reducing abuse surface and aligning smart contract economics with cryptographic workload.
 
 ## 5. Future Extensions
 
@@ -123,4 +132,3 @@ This bytecode sequence pushes the value `1` onto the stack, then pushes the valu
 3.  **`ADD`**: The `ADD` opcode pops the top two values (`2` and `1`) from the stack, adds them, and pushes the result (`3`) back onto the stack.
 
 After execution, the stack will contain a single element: `[0x00...0x03]` (representing the value 3).
-

@@ -1,6 +1,8 @@
 # SynQ Example Contracts Index
 
-This directory contains complete, production-ready example SynQ smart contracts that demonstrate all features of the language.
+This directory contains comprehensive SynQ smart-contract examples intended for reference and testing.
+
+> **Security Status (2026-02-15):** These examples now compile with the official SynQ CLI, but they are **not certified production contracts** yet. See audited findings and remediation backlog under `/Users/devpup/Desktop/Synergy/synergy-components/synq-language/audits/reports/synq-example-contract-audits-2026-02-09/`.
 
 ## Example Contracts
 
@@ -9,6 +11,7 @@ This directory contains complete, production-ready example SynQ smart contracts 
 A complete ERC20-like token implementation with post-quantum security features.
 
 **Features Demonstrated:**
+
 - ✅ Standard ERC20 functions (transfer, approve, transferFrom)
 - ✅ Token minting with PQC signature verification
 - ✅ Token burning
@@ -19,6 +22,7 @@ A complete ERC20-like token implementation with post-quantum security features.
 - ✅ `require_pqc` blocks for secure operations
 
 **Key Functions:**
+
 - `transfer()`, `transferFrom()`, `approve()`
 - `mint()` - Requires ML-DSA signature
 - `burn()`, `burnFrom()`
@@ -33,6 +37,7 @@ A complete ERC20-like token implementation with post-quantum security features.
 A post-quantum multi-signature wallet requiring multiple PQC signatures for transactions.
 
 **Features Demonstrated:**
+
 - ✅ Multi-owner management
 - ✅ Transaction submission and confirmation
 - ✅ PQC signature verification for confirmations
@@ -41,6 +46,7 @@ A post-quantum multi-signature wallet requiring multiple PQC signatures for tran
 - ✅ Batch signature verification
 
 **Key Functions:**
+
 - `submitTransaction()` - Create new transaction
 - `confirmTransaction()` - Confirm with PQC signature
 - `addOwner()`, `removeOwner()`, `replaceOwner()` - Multi-sig governance
@@ -54,6 +60,7 @@ A post-quantum multi-signature wallet requiring multiple PQC signatures for tran
 A complete DAO implementation with PQC-secured governance and voting.
 
 **Features Demonstrated:**
+
 - ✅ Proposal creation and management
 - ✅ Token-weighted voting
 - ✅ PQC signature voting (for off-chain voting)
@@ -62,6 +69,7 @@ A complete DAO implementation with PQC-secured governance and voting.
 - ✅ Governance parameter updates
 
 **Key Functions:**
+
 - `propose()` - Create governance proposal
 - `castVote()` - Standard on-chain voting
 - `castVoteWithSignature()` - Off-chain voting with PQC
@@ -75,6 +83,7 @@ A complete DAO implementation with PQC-secured governance and voting.
 A complete ERC721-like NFT contract with PQC-secured minting.
 
 **Features Demonstrated:**
+
 - ✅ Standard NFT functions (transfer, approve, etc.)
 - ✅ PQC signature verification for minting
 - ✅ Batch minting
@@ -83,6 +92,7 @@ A complete ERC721-like NFT contract with PQC-secured minting.
 - ✅ Public and private minting modes
 
 **Key Functions:**
+
 - `mint()` - Mint with PQC signature
 - `publicMint()` - Public minting (when enabled)
 - `batchMint()` - Gas-optimized batch minting
@@ -97,6 +107,7 @@ A complete ERC721-like NFT contract with PQC-secured minting.
 A secure escrow system with PQC signature verification for releases.
 
 **Features Demonstrated:**
+
 - ✅ Escrow creation with lock periods
 - ✅ PQC signature verification for release
 - ✅ Dispute resolution with arbitrator
@@ -104,6 +115,7 @@ A secure escrow system with PQC signature verification for releases.
 - ✅ Refund functionality
 
 **Key Functions:**
+
 - `createEscrow()` - Create new escrow
 - `releaseEscrow()` - Release with PQC signature
 - `refundEscrow()` - Refund after expiration
@@ -118,6 +130,7 @@ A secure escrow system with PQC signature verification for releases.
 A complete staking system with PQC-secured rewards and emergency withdrawals.
 
 **Features Demonstrated:**
+
 - ✅ Token staking with lock periods
 - ✅ Reward calculation and distribution
 - ✅ PQC signature for emergency withdrawals
@@ -125,6 +138,7 @@ A complete staking system with PQC-secured rewards and emergency withdrawals.
 - ✅ Governance for reward rate updates
 
 **Key Functions:**
+
 - `stake()` - Stake tokens with lock period
 - `unstake()` - Unstake after lock expires
 - `claimRewards()` - Claim earned rewards

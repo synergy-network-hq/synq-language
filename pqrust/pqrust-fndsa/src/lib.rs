@@ -1,4 +1,3 @@
-
 #![no_std]
 #![allow(clippy::len_without_is_empty)]
 
@@ -7,11 +6,11 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub mod ffi;
 pub mod fndsa1024;
 pub mod fndsa512;
 pub mod fndsapadded1024;
 pub mod fndsapadded512;
-pub mod ffi;
 
 pub use crate::fndsa1024::{
     detached_sign as falcon1024_detached_sign, keypair as falcon1024_keypair,

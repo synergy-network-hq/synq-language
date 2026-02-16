@@ -3,7 +3,7 @@
 import nacl from 'tweetnacl';
 import * as Kyber from './crypto/kyber';
 import * as dilithium from '@openquantum/dilithium';
-import bs58 from 'bs58';
+import { decodeBase58, encodeBase58 } from './encoding';
 
 export class DilithiumKeypair {
   publicKey: Uint8Array;
@@ -28,7 +28,7 @@ export class DilithiumKeypair {
   }
 
   toBase58(): string {
-    return bs58.encode(this.publicKey);
+    return encodeBase58(this.publicKey);
   }
 }
 
@@ -103,9 +103,9 @@ export class HybridMultiSig {
 }
 
 export function base58Encode(data: Uint8Array): string {
-  return bs58.encode(data);
+  return encodeBase58(data);
 }
 
 export function base58Decode(encoded: string): Uint8Array {
-  return bs58.decode(encoded);
+  return decodeBase58(encoded);
 }

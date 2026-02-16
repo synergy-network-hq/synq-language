@@ -160,7 +160,10 @@ impl SolidityGenerator {
         self.write(") ");
 
         if let Some(ref ret_ty) = f.returns {
-            self.write(&format!("external returns ({}) ", self.type_to_solidity(ret_ty)));
+            self.write(&format!(
+                "external returns ({}) ",
+                self.type_to_solidity(ret_ty)
+            ));
         }
 
         self.write(&format!("{} ", visibility));
@@ -271,8 +274,40 @@ impl SolidityGenerator {
                 self.gen_expression(expr)?;
                 self.writeln(";");
             }
-            _ => {
-                return Err(format!("Unsupported statement type in Solidity generation"));
+            Statement::For(iterator, start, end, body) => {
+                self.write("for (uint256 ");
+                self.write(iterator);
+                self.write(" = ");
+                self.gen_expression(start)?;
+                self.write("; ");
+                self.write(iterator);
+                self.write(" < ");
+                self.gen_expression(end)?;
+                self.write("; ");
+                self.write(iterator);
+                self.writeln("++) {");
+                self.indent();
+                self.gen_block(body)?;
+                self.dedent();
+                self.writeln("}");
+            }
+            Statement::RequirePqc(pqc_block, fallback) => {
+                self.writeln("{");
+                self.indent();
+                self.writeln("// SynQ require_pqc compatibility block");
+                self.writeln("bool __synq_pqc_ok = true;");
+                self.gen_block(pqc_block)?;
+                self.writeln("if (!__synq_pqc_ok) {");
+                self.indent();
+                if let Some(fallback_stmt) = fallback {
+                    self.gen_statement(fallback_stmt)?;
+                } else {
+                    self.writeln("revert(\"PQC verification failed\");");
+                }
+                self.dedent();
+                self.writeln("}");
+                self.dedent();
+                self.writeln("}");
             }
         }
         Ok(())
@@ -372,7 +407,6 @@ impl SolidityGenerator {
                 )
             }
             Type::Struct(name) => name.clone(),
-            Type::Generic(name, _) => name.clone(),
         }
     }
 

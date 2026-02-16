@@ -19,7 +19,11 @@ impl fmt::Display for VMError {
             VMError::InvalidBytecode(msg) => write!(f, "Invalid bytecode: {}", msg),
             VMError::StackUnderflow(msg) => write!(f, "Stack underflow: {}", msg),
             VMError::StackOverflow(msg) => write!(f, "Stack overflow: {}", msg),
-            VMError::InvalidInstruction(op) => write!(f, "Invalid instruction: 0x{:02x} (unknown opcode at this location)", op),
+            VMError::InvalidInstruction(op) => write!(
+                f,
+                "Invalid instruction: 0x{:02x} (unknown opcode at this location)",
+                op
+            ),
             VMError::InvalidAddress(msg) => write!(f, "Invalid address: {}", msg),
             VMError::CryptoError(msg) => write!(f, "Cryptographic operation failed: {}", msg),
             VMError::RuntimeError(msg) => write!(f, "Runtime error: {}", msg),
@@ -70,6 +74,9 @@ pub enum OpCode {
     MLKEMKeyExchange = 0x81,
     FNDSAVerify = 0x82,
     SLHDSAVerify = 0x83,
+    HQCKEM128KeyExchange = 0x84,
+    HQCKEM192KeyExchange = 0x85,
+    HQCKEM256KeyExchange = 0x86,
 
     // Utility
     Print = 0xF0,
@@ -106,6 +113,9 @@ impl TryFrom<u8> for OpCode {
             0x81 => Ok(OpCode::MLKEMKeyExchange),
             0x82 => Ok(OpCode::FNDSAVerify),
             0x83 => Ok(OpCode::SLHDSAVerify),
+            0x84 => Ok(OpCode::HQCKEM128KeyExchange),
+            0x85 => Ok(OpCode::HQCKEM192KeyExchange),
+            0x86 => Ok(OpCode::HQCKEM256KeyExchange),
             0xF0 => Ok(OpCode::Print),
             0xFF => Ok(OpCode::Halt),
             _ => Err(VMError::InvalidInstruction(value)),

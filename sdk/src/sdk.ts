@@ -1,6 +1,6 @@
 // sdk/src/sdk.ts
 
-import { DilithiumKeypair, ECDSAKeypair, KyberKeypair } from './keys';
+import type { DilithiumKeypair, ECDSAKeypair, KyberKeypair } from './keys';
 import { Transaction } from './tx';
 
 export class QuantumVMClient {
@@ -55,14 +55,17 @@ export class QuantumVMSDK {
   }
 
   async generateDilithiumKeypair(): Promise<DilithiumKeypair> {
+    const { DilithiumKeypair } = await import('./keys');
     return DilithiumKeypair.generate();
   }
 
-  generateECDSAKeypair(): ECDSAKeypair {
+  async generateECDSAKeypair(): Promise<ECDSAKeypair> {
+    const { ECDSAKeypair } = await import('./keys');
     return ECDSAKeypair.generate();
   }
 
   async generateKyberKeypair(): Promise<KyberKeypair> {
+    const { KyberKeypair } = await import('./keys');
     return KyberKeypair.generate();
   }
 
@@ -79,5 +82,4 @@ export class QuantumVMSDK {
     return this.client.send('get_blockNumber', []);
   }
 }
-
 

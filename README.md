@@ -174,7 +174,3 @@ SynQ is maintained by the Synergy Network Core R&D team.
 ## 🧠 License
 
 SynQ is released under the MIT License.
-
----
-
-End of README.md

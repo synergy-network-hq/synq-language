@@ -1,4 +1,4 @@
-### SynQ Gas & Resource Model v0.1
+# SynQ Gas & Resource Model v0.1
 
 ---
 
@@ -15,30 +15,31 @@
 
 All PQC operations in SynQ follow a 3-part cost formula:
 
-```
+```plaintext
 Total Gas = BaseCost + DataCost + ComputeCost
 ```
 
-| Component         | Description                                              |
-|------------------|----------------------------------------------------------|
-| **BaseCost**     | Fixed overhead for invoking a PQC operation              |
-| **DataCost**     | Cost proportional to input sizes (signature, message, key) |
-| **ComputeCost**  | CPU/memory cost for the specific PQC algorithm           |
+| Component         | Description                                               |
+|-------------------|-----------------------------------------------------------|
+| **BaseCost**      | Fixed overhead for invoking a PQC operation               |
+| **DataCost**      | Cost proportional to input sizes (signature, message, key)|
+| **ComputeCost**   | CPU/memory cost for the specific PQC algorithm            |
 
 ---
 
 ## 3. Standard Operation Costs (Benchmark Derived)
 
-| Operation                   | Level | BaseCost | Est. DataCost | ComputeCost | Total Estimate |
-|----------------------------|--------|----------|---------------|--------------|----------------|
-| `verify_mldsa`             | ML-DSA-44 (L2) | 5,000    | 6,000         | 14,000       | **25,000**     |
-|                            | ML-DSA-65 (L3) | 6,000    | 9,000         | 20,000       | **35,000**     |
-|                            | ML-DSA-87 (L5) | 7,000    | 13,000        | 30,000       | **50,000**     |
-| `verify_fndsa`             | FN-DSA-512 (L1) | 4,000    | 6,000         | 10,000       | **20,000**     |
-|                            | FN-DSA-1024 (L5) | 6,000    | 9,000         | 15,000       | **30,000**     |
-| `mlkem_encapsulate`        | ML-KEM-768 (L3) | 5,000    | 5,000         | 15,000       | **25,000**     |
-| `mlkem_decapsulate`        | ML-KEM-768 (L3) | 5,000    | 6,000         | 14,000       | **25,000**     |
-| `mldsa_keygen`             | ML-DSA-65 (L3) | 5,000    | 0             | 20,000       | **25,000**     |
+| Operation                  | Level           | BaseCost | Est. DataCost | ComputeCost | Total Estimate |
+|----------------------------|-----------------|----------|---------------|-------------|----------------|
+| `verify_mldsa`             | ML-DSA-44 (L2)  | 5,000    | 6,000         | 14,000      | **25,000**     |
+|                            | ML-DSA-65 (L3)  | 6,000    | 9,000         | 20,000      | **35,000**     |
+|                            | ML-DSA-87 (L5)  | 7,000    | 13,000        | 30,000      | **50,000**     |
+| `verify_fndsa`             | FN-DSA-512 (L1) | 4,000    | 6,000         | 10,000      | **20,000**     |
+|                            | FN-DSA-1024 (L5)| 6,000    | 9,000         | 15,000      | **30,000**     |
+| `mlkem_encapsulate`        | ML-KEM-768 (L3) | 5,000    | 5,000         | 15,000      | **25,000**     |
+| `mlkem_decapsulate`        | ML-KEM-768 (L3) | 5,000    | 6,000         | 14,000      | **25,000**     |
+| `mldsa_keygen`             | ML-DSA-65 (L3)  | 5,000    | 0             | 20,000      | **25,000**     |
+|----------------------------|-----------------|----------|---------------|-------------|----------------|
 
 ---
 
@@ -56,6 +57,7 @@ function verify_member_batch(members: Address[], signatures: FNDSASignature[]) -
 ```
 
 **Expected Effect (when implemented):**
+
 - Reduces per-signature cost by up to **40–60%**
 - Signature cost drops from 20,000 to **~5,000 gas**
 
@@ -66,6 +68,7 @@ function verify_member_batch(members: Address[], signatures: FNDSASignature[]) -
 > **Note:** `const` declarations and `macro` definitions are planned for future implementation. Storage costs are currently handled automatically by the VM.
 
 Proposed future syntax:
+
 ```synq
 // Future syntax (not yet implemented)
 const storage_cost_per_kb = 50_000 gas;
@@ -76,6 +79,7 @@ macro storage_cost<T>(value: T) -> gas {
 ```
 
 **Current Implementation:**
+
 - Storage costs are automatically calculated by the VM
 - Cost is approximately 50,000 gas per KB stored
 
@@ -84,6 +88,7 @@ macro storage_cost<T>(value: T) -> gas {
 ## 6. Gas Control Syntax
 
 ### 6.1 Function-Level Cost Annotation
+
 ```synq
 @gas_cost(base: 45_000, mldsa_verify: 35_000)
 function submit_proposal(...) { ... }
@@ -111,6 +116,7 @@ with_gas_limit(200_000) {
 ```
 
 **Current Behavior:**
+
 - Gas limits are enforced at the transaction level by the VM
 - Each transaction has a maximum gas limit configured at the network level
 
@@ -148,6 +154,7 @@ All base costs and function costs are encoded in the Genesis block for every Syn
 > **Status:** Hardware acceleration annotations are planned for future implementation.
 
 **Proposed Future Syntax:**
+
 ```synq
 // Future syntax (not yet implemented)
 @hardware_accel
@@ -157,6 +164,7 @@ function verify_mldsa(msg, sig, key) -> Bool {
 ```
 
 **Current Behavior:**
+
 - All PQC operations currently use software implementations
 - Hardware acceleration is planned for future VM enhancements
 - If implemented, VM will automatically route to hardware when available and fall back to software otherwise

@@ -108,15 +108,29 @@ pub enum Expression {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOp {
-    Add, Sub, Mul, Div, Mod,
-    Eq, Ne, Lt, Le, Gt, Ge,
-    And, Or,
-    Shl, Shr,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Eq,
+    Ne,
+    Lt,
+    Le,
+    Gt,
+    Ge,
+    And,
+    Or,
+    Shl,
+    Shr,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOp {
-    Not, Neg, Inc, Dec,
+    Not,
+    Neg,
+    Inc,
+    Dec,
 }
 
 #[derive(Debug, PartialEq, Clone)]

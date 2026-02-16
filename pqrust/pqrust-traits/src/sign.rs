@@ -1,4 +1,3 @@
-
 use crate::Result;
 
 pub trait PublicKey {

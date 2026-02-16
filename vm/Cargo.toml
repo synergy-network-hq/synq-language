@@ -4,7 +4,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-pqsynq = { path = "../pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa"] }
+pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa", "hqckem"] }
 
 [dev-dependencies]
-pqsynq = { path = "../pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa"] }
+pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa", "hqckem"] }
