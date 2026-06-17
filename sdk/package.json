@@ -6,7 +6,8 @@
     "test:integration": "tsx --test tests/integration.test.ts"
   },
   "dependencies": {
-    "bs58": "^6.0.0"
+    "bs58": "^6.0.0",
+    "esbuild": "^0.28.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",

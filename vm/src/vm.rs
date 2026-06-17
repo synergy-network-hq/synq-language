@@ -55,9 +55,11 @@ pub struct Header {
 
 impl Header {
     pub const MAGIC: u32 = 0x51564D00; // QVM\0
+    pub const FIXED_HEADER_SIZE: usize = 15;
+    pub const MIN_HEADER_LENGTH: u16 = 15;
 
     pub fn parse(bytes: &[u8]) -> Result<Self, VMError> {
-        if bytes.len() < 12 {
+        if bytes.len() < Self::FIXED_HEADER_SIZE {
             return Err(VMError::InvalidBytecode("Header too short".to_string()));
         }
 
@@ -68,6 +70,13 @@ impl Header {
 
         let version = bytes[4];
         let header_length = u16::from_le_bytes([bytes[5], bytes[6]]);
+        if header_length < Self::MIN_HEADER_LENGTH {
+            return Err(VMError::InvalidBytecode(format!(
+                "Header length {} too small, minimum is {}",
+                header_length,
+                Self::MIN_HEADER_LENGTH
+            )));
+        }
         let code_length = u32::from_le_bytes([bytes[7], bytes[8], bytes[9], bytes[10]]);
         let data_length = u32::from_le_bytes([bytes[11], bytes[12], bytes[13], bytes[14]]);
 
@@ -175,9 +184,27 @@ impl QuantumVM {
     pub fn load_bytecode(&mut self, bytecode: &[u8]) -> Result<(), VMError> {
         let header = Header::parse(bytecode)?;
 
-        let header_end = header.header_length as usize;
-        let code_end = header_end + header.code_length as usize;
-        let data_end = code_end + header.data_length as usize;
+        let header_end = usize::try_from(header.header_length).map_err(|_| {
+            VMError::InvalidBytecode("Header length overflows this platform".to_string())
+        })?;
+
+        if header_end > bytecode.len() {
+            return Err(VMError::InvalidBytecode("Bytecode too short".to_string()));
+        }
+
+        let code_length = usize::try_from(header.code_length).map_err(|_| {
+            VMError::InvalidBytecode("Code length overflows this platform".to_string())
+        })?;
+        let data_length = usize::try_from(header.data_length).map_err(|_| {
+            VMError::InvalidBytecode("Data length overflows this platform".to_string())
+        })?;
+
+        let code_end = header_end.checked_add(code_length).ok_or_else(|| {
+            VMError::InvalidBytecode("Bytecode header length overflow".to_string())
+        })?;
+        let data_end = code_end.checked_add(data_length).ok_or_else(|| {
+            VMError::InvalidBytecode("Bytecode header length overflow".to_string())
+        })?;
 
         if bytecode.len() < data_end {
             return Err(VMError::InvalidBytecode("Bytecode too short".to_string()));
@@ -533,5 +560,64 @@ impl QuantumVM {
         let bytes = self.code[self.pc..self.pc + len].to_vec();
         self.pc += len;
         Ok(bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn magic_header_bytes(length: usize) -> Vec<u8> {
+        let mut bytes = vec![0u8; length];
+        bytes[0..4].copy_from_slice(&Header::MAGIC.to_le_bytes());
+        if length > 4 {
+            bytes[4] = 1;
+        }
+        bytes
+    }
+
+    #[test]
+    fn parse_rejects_valid_magic_headers_shorter_than_fixed_size() {
+        for length in [12usize, 13, 14] {
+            let bytes = magic_header_bytes(length);
+            let err = Header::parse(&bytes).expect_err("expected invalid bytecode error");
+            assert!(matches!(
+                err,
+                VMError::InvalidBytecode(ref msg) if msg == "Header too short"
+            ));
+        }
+    }
+
+    #[test]
+    fn parse_rejects_too_small_header_length() {
+        let mut bytes = magic_header_bytes(15);
+        bytes[5..7].copy_from_slice(&(14u16).to_le_bytes());
+
+        let err = Header::parse(&bytes).expect_err("expected invalid bytecode error");
+        assert!(matches!(
+            err,
+            VMError::InvalidBytecode(ref msg)
+                if msg == "Header length 14 too small, minimum is 15"
+        ));
+    }
+
+    #[cfg(target_pointer_width = "32")]
+    #[test]
+    fn load_bytecode_rejects_length_arithmetic_overflow() {
+        let mut bytecode = vec![0u8; 15];
+        bytecode[0..4].copy_from_slice(&Header::MAGIC.to_le_bytes());
+        bytecode[4] = 1;
+        bytecode[5..7].copy_from_slice(&(Header::MIN_HEADER_LENGTH).to_le_bytes());
+        bytecode[7..11].copy_from_slice(&u32::MAX.to_le_bytes());
+        bytecode[11..15].copy_from_slice(&u32::MAX.to_le_bytes());
+
+        let mut vm = QuantumVM::new();
+        let err = vm
+            .load_bytecode(&bytecode)
+            .expect_err("expected invalid bytecode error");
+        assert!(matches!(
+            err,
+            VMError::InvalidBytecode(ref msg) if msg == "Bytecode header length overflow"
+        ));
     }
 }
