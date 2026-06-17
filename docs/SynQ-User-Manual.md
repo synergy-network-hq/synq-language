@@ -155,7 +155,163 @@ bash aegis-pqsynq/pqsynq/scripts/run_tests.sh
 
 ## 7. CLI Usage (Current, Not Aspirational)
 
-## 7.1 Compile Contract
+## 7.1 Create A Project Template
+
+```bash
+cargo run -p cli -- init counter
+```
+
+What it does:
+
+- Creates `counter/synq.toml`
+- Creates `counter/contracts/Counter.synq`
+- Creates `counter/tests/.gitkeep`
+- Creates `counter/scripts/deploy-local-demo.sh`
+- Creates `.gitignore` with `/keys/` ignored
+
+This is a local project scaffold. It does not create keys or submit a
+deployment.
+
+## 7.2 Check Contract
+
+```bash
+cargo run -p cli -- check /absolute/path/to/contract.synq
+```
+
+What it does:
+
+- Parses SynQ source
+- Runs semantic analysis
+- Generates bytecode, ABI, and manifest in memory
+- Prints contract name and deterministic artifact hashes
+
+## 7.3 Build Complete Artifacts
+
+```bash
+cargo run -p cli -- build /absolute/path/to/contract.synq
+```
+
+What it emits next to the source:
+
+- `*.compiled.synq`
+- `*.abi.json`
+- `*.manifest.json`
+- `*.sol` compatibility preview with the non-production warning
+
+## 7.4 Emit ABI Or Manifest Only
+
+```bash
+cargo run -p cli -- abi /absolute/path/to/contract.synq
+cargo run -p cli -- manifest /absolute/path/to/contract.synq
+cargo run -p cli -- abi /absolute/path/to/contract.synq --output /tmp/contract.abi.json
+cargo run -p cli -- manifest /absolute/path/to/contract.synq --output /tmp/contract.manifest.json
+```
+
+## 7.5 Generate A Testnet Identity
+
+```bash
+cargo run -p cli -- keygen \
+  --algorithm ml-dsa-65 \
+  --network testnet \
+  --out-dir /absolute/path/to/project/keys
+```
+
+What it does:
+
+- Calls `aegis-pqsynq` ML-DSA-65 key generation.
+- Derives the SynQ testnet address through `aegis-pqsynq`.
+- Writes a public JSON file and a private JSON key file.
+- Restricts private key file permissions to `0600` on Unix platforms.
+- Prints paths and the address, but does not print private key bytes.
+
+This is local key material only. Do not commit generated files under `keys/`.
+
+## 7.6 Sign And Verify A Deploy Envelope Locally
+
+After `build` emits bytecode, ABI, and manifest artifacts:
+
+```bash
+cargo run -p cli -- sign-deploy \
+  --bytecode /absolute/path/to/Counter.compiled.synq \
+  --manifest /absolute/path/to/Counter.manifest.json \
+  --abi /absolute/path/to/Counter.abi.json \
+  --private-key /absolute/path/to/project/keys/synq-testnet-mldsa65.private.json \
+  --output /absolute/path/to/Counter.deploy.json \
+  --nonce 1
+
+cargo run -p cli -- verify-deploy /absolute/path/to/Counter.deploy.json
+```
+
+What it does:
+
+- Recomputes bytecode, ABI, and manifest hashes.
+- Validates manifest chain/network/signature policy fields.
+- Creates a `SYNQ_CONTRACT_DEPLOY_V1` signing payload.
+- Signs with ML-DSA-65 through `aegis-pqsynq`.
+- Self-verifies the envelope through `AegisSynQVerifier::testnet_1264()`.
+
+This produces a canonical local deploy envelope. It does not submit a
+transaction to public TESTNET.
+
+## 7.7 Sign And Verify A Call Envelope Locally
+
+After `build` emits ABI and manifest artifacts, and after `keygen` creates a
+local testnet identity:
+
+```bash
+cargo run -p cli -- sign-call \
+  --contract tsynq1... \
+  --method increment \
+  --args '[]' \
+  --abi /absolute/path/to/Counter.abi.json \
+  --manifest /absolute/path/to/Counter.manifest.json \
+  --private-key /absolute/path/to/project/keys/synq-testnet-mldsa65.private.json \
+  --output /absolute/path/to/Counter.increment.call.json \
+  --nonce 2
+
+cargo run -p cli -- verify-call /absolute/path/to/Counter.increment.call.json
+```
+
+What it does:
+
+- Reads the method selector from the ABI.
+- Supports the current no-argument Counter subset: `increment()` and `get()`.
+- Encodes omitted, empty, or `[]` args as the canonical empty args hash.
+- Validates manifest chain/network/signature policy fields.
+- Creates a `SYNQ_CONTRACT_CALL_V1` signing payload.
+- Signs with ML-DSA-65 through `aegis-pqsynq`.
+- Self-verifies the envelope through `AegisSynQVerifier::testnet_1264()`.
+- `verify-call` preserves structured `aegis-pqsynq` error codes such as
+  `AEGIS-DOMAIN`, `AEGIS-SIG`, and `AEGIS-CANON`.
+
+This produces a canonical local call envelope. It does not submit a
+transaction to public TESTNET and is not the same as a future live
+`synq call Counter.increment` command.
+
+## 7.8 `synq.toml` Consumption
+
+When `check`, `build`, `abi`, `manifest`, `compile`, `simulate`, or `verify`
+receives a source path, the CLI searches from the source directory upward for
+`synq.toml`. If no file exists, the compiler uses the default chain-1264
+testnet profile.
+
+When `synq.toml` exists, the CLI validates these sections before artifact
+generation:
+
+- `[package]`: non-empty `name` and `version`
+- `[compiler]`: `language_version = "0.1"`, `bytecode_version = 1`, and a
+  non-empty `target_aivm_version`
+- `[network]`: `chain_id = 1264`, `address_hrp = "tsynq"`, and
+  `network_id = "synergy-testnet"` or the chain-1264 node alias
+  `"synergy-testnet-v2"`
+- `[security]`: `signature_algorithm = "ML-DSA-65"`,
+  `deploy_domain = "SYNQ_CONTRACT_DEPLOY_V1"`, and
+  `call_domain = "SYNQ_CONTRACT_CALL_V1"`
+
+Invalid chain, network, HRP, bytecode version, language version, signature
+algorithm, or domain settings fail the command before manifest generation.
+
+## 7.9 Compile Contract
 
 ```bash
 cargo run -p cli -- compile --path /absolute/path/to/contract.synq
@@ -169,7 +325,7 @@ What it does:
   - `*.compiled.synq` when source already ends with `.synq` (prevents source overwrite)
 - Emits Solidity file: same path with `.sol` extension
 
-## 7.2 Run Bytecode
+## 7.10 Run Bytecode
 
 ```bash
 cargo run -p cli -- run --path /absolute/path/to/contract.compiled.synq
@@ -179,14 +335,28 @@ Success output ends with:
 
 `Execution finished successfully`
 
-## 7.3 Important Operational Notes
+## 7.11 Simulate Source Locally
 
-- CLI is intentionally minimal right now (`compile`, `run`, `verify`)
+```bash
+cargo run -p cli -- simulate /absolute/path/to/contract.synq
+```
+
+This executes generated bytecode through the current local QuantumVM. It is a
+compiler/VM smoke tool, not a chain deployment. Stateful `Counter.synq`
+execution is currently demonstrated through the AIVM overlay example, because
+the raw generated Counter bytecode does not yet implement complete state
+load/store semantics.
+
+## 7.12 Important Operational Notes
+
+- CLI currently supports `init`, `check`, `build`, `abi`, `manifest`,
+  `keygen`, `sign-deploy`, `verify-deploy`, `sign-call`, `verify-call`,
+  `simulate`, `compile`, `run`, and `verify`
 - `verify` enforces deterministic source->bytecode reproducibility and can optionally execute verified bytecode
-- No deploy/estimate/trace command surface is implemented in this CLI yet
+- No live `deploy`, live `call`, `test`, `fmt`, estimate, or trace command surface is implemented in this CLI yet
 - Treat this as a compiler/VM harness, not a full blockchain developer console
 
-## 7.4 Verify Deterministic Bytecode
+## 7.13 Verify Deterministic Bytecode
 
 ```bash
 cargo run -p cli -- verify \

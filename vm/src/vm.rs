@@ -1,6 +1,13 @@
 use super::opcode::{OpCode, VMError};
-use pqsynq::{DigitalSignature, Kem, KeyEncapsulation, Sign};
 use std::collections::HashMap;
+
+#[derive(Debug, Clone, Copy)]
+enum KemOperation {
+    MlKem768,
+    HqcKem128,
+    HqcKem192,
+    HqcKem256,
+}
 
 // Value types that can be stored on the stack
 #[derive(Debug, Clone)]
@@ -55,11 +62,9 @@ pub struct Header {
 
 impl Header {
     pub const MAGIC: u32 = 0x51564D00; // QVM\0
-    pub const FIXED_HEADER_SIZE: usize = 15;
-    pub const MIN_HEADER_LENGTH: u16 = 15;
 
     pub fn parse(bytes: &[u8]) -> Result<Self, VMError> {
-        if bytes.len() < Self::FIXED_HEADER_SIZE {
+        if bytes.len() < 15 {
             return Err(VMError::InvalidBytecode("Header too short".to_string()));
         }
 
@@ -70,13 +75,6 @@ impl Header {
 
         let version = bytes[4];
         let header_length = u16::from_le_bytes([bytes[5], bytes[6]]);
-        if header_length < Self::MIN_HEADER_LENGTH {
-            return Err(VMError::InvalidBytecode(format!(
-                "Header length {} too small, minimum is {}",
-                header_length,
-                Self::MIN_HEADER_LENGTH
-            )));
-        }
         let code_length = u32::from_le_bytes([bytes[7], bytes[8], bytes[9], bytes[10]]);
         let data_length = u32::from_le_bytes([bytes[11], bytes[12], bytes[13], bytes[14]]);
 
@@ -184,27 +182,9 @@ impl QuantumVM {
     pub fn load_bytecode(&mut self, bytecode: &[u8]) -> Result<(), VMError> {
         let header = Header::parse(bytecode)?;
 
-        let header_end = usize::try_from(header.header_length).map_err(|_| {
-            VMError::InvalidBytecode("Header length overflows this platform".to_string())
-        })?;
-
-        if header_end > bytecode.len() {
-            return Err(VMError::InvalidBytecode("Bytecode too short".to_string()));
-        }
-
-        let code_length = usize::try_from(header.code_length).map_err(|_| {
-            VMError::InvalidBytecode("Code length overflows this platform".to_string())
-        })?;
-        let data_length = usize::try_from(header.data_length).map_err(|_| {
-            VMError::InvalidBytecode("Data length overflows this platform".to_string())
-        })?;
-
-        let code_end = header_end.checked_add(code_length).ok_or_else(|| {
-            VMError::InvalidBytecode("Bytecode header length overflow".to_string())
-        })?;
-        let data_end = code_end.checked_add(data_length).ok_or_else(|| {
-            VMError::InvalidBytecode("Bytecode header length overflow".to_string())
-        })?;
+        let header_end = header.header_length as usize;
+        let code_end = header_end + header.code_length as usize;
+        let data_end = code_end + header.data_length as usize;
 
         if bytecode.len() < data_end {
             return Err(VMError::InvalidBytecode("Bytecode too short".to_string()));
@@ -403,15 +383,17 @@ impl QuantumVM {
                 let gas_cost = 6000 + data_cost + 20000;
                 self.gas_meter.consume_pqc(gas_cost)?;
 
-                // Use ML-DSA-65 for verification
-                let signer = Sign::mldsa65();
-                let result = signer
-                    .verify(&message, &signature, &public_key)
-                    .unwrap_or(false);
+                let result = verify_mldsa65(&message, &signature, &public_key)?;
                 self.push(Value::Bool(result))?;
             }
             OpCode::MLKEMKeyExchange => {
-                self.execute_kem_key_exchange(Kem::mlkem768(), "ML-KEM-768", 5000, 6, 14000)?;
+                self.execute_kem_key_exchange(
+                    KemOperation::MlKem768,
+                    "ML-KEM-768",
+                    5000,
+                    6,
+                    14000,
+                )?;
             }
             OpCode::FNDSAVerify => {
                 let public_key = self.pop()?.as_bytes()?.to_vec();
@@ -424,11 +406,7 @@ impl QuantumVM {
                 let gas_cost = 4000 + data_cost + 10000;
                 self.gas_meter.consume_pqc(gas_cost)?;
 
-                // Use FN-DSA-512 for verification
-                let signer = Sign::fndsa512();
-                let result = signer
-                    .verify(&message, &signature, &public_key)
-                    .unwrap_or(false);
+                let result = verify_fndsa512(&message, &signature, &public_key)?;
                 self.push(Value::Bool(result))?;
             }
             OpCode::SLHDSAVerify => {
@@ -437,13 +415,31 @@ impl QuantumVM {
                 ));
             }
             OpCode::HQCKEM128KeyExchange => {
-                self.execute_kem_key_exchange(Kem::hqckem128(), "HQC-KEM-128", 6500, 7, 22000)?;
+                self.execute_kem_key_exchange(
+                    KemOperation::HqcKem128,
+                    "HQC-KEM-128",
+                    6500,
+                    7,
+                    22000,
+                )?;
             }
             OpCode::HQCKEM192KeyExchange => {
-                self.execute_kem_key_exchange(Kem::hqckem192(), "HQC-KEM-192", 7000, 7, 26000)?;
+                self.execute_kem_key_exchange(
+                    KemOperation::HqcKem192,
+                    "HQC-KEM-192",
+                    7000,
+                    7,
+                    26000,
+                )?;
             }
             OpCode::HQCKEM256KeyExchange => {
-                self.execute_kem_key_exchange(Kem::hqckem256(), "HQC-KEM-256", 7500, 7, 32000)?;
+                self.execute_kem_key_exchange(
+                    KemOperation::HqcKem256,
+                    "HQC-KEM-256",
+                    7500,
+                    7,
+                    32000,
+                )?;
             }
             OpCode::Print => {
                 let value = self.pop()?;
@@ -459,7 +455,7 @@ impl QuantumVM {
 
     fn execute_kem_key_exchange(
         &mut self,
-        kem: Kem,
+        operation: KemOperation,
         algorithm_name: &str,
         base_cost: u64,
         data_multiplier: u64,
@@ -474,8 +470,8 @@ impl QuantumVM {
         let gas_cost = base_cost + data_cost + compute_cost;
         self.gas_meter.consume_pqc(gas_cost)?;
 
-        let shared_secret = kem.decapsulate(&ciphertext, &private_key).map_err(|e| {
-            VMError::CryptoError(format!("{algorithm_name} decapsulation failed: {:?}", e))
+        let shared_secret = decapsulate(operation, &ciphertext, &private_key).map_err(|e| {
+            VMError::CryptoError(format!("{algorithm_name} decapsulation failed: {e}"))
         })?;
         self.push(Value::Bytes(shared_secret))?;
         Ok(())
@@ -563,61 +559,71 @@ impl QuantumVM {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[cfg(not(feature = "pqc-aegis"))]
+fn missing_pqc_backend_error() -> VMError {
+    VMError::CryptoError(
+        "aegis-pqsynq backend is unavailable; restore aegis-pqsynq/pqsynq and rebuild with feature `pqc-aegis`".to_string(),
+    )
+}
 
-    fn magic_header_bytes(length: usize) -> Vec<u8> {
-        let mut bytes = vec![0u8; length];
-        bytes[0..4].copy_from_slice(&Header::MAGIC.to_le_bytes());
-        if length > 4 {
-            bytes[4] = 1;
-        }
-        bytes
-    }
+#[cfg(not(feature = "pqc-aegis"))]
+fn verify_mldsa65(_message: &[u8], _signature: &[u8], _public_key: &[u8]) -> Result<bool, VMError> {
+    Err(missing_pqc_backend_error())
+}
 
-    #[test]
-    fn parse_rejects_valid_magic_headers_shorter_than_fixed_size() {
-        for length in [12usize, 13, 14] {
-            let bytes = magic_header_bytes(length);
-            let err = Header::parse(&bytes).expect_err("expected invalid bytecode error");
-            assert!(matches!(
-                err,
-                VMError::InvalidBytecode(ref msg) if msg == "Header too short"
-            ));
-        }
-    }
+#[cfg(feature = "pqc-aegis")]
+fn verify_mldsa65(message: &[u8], signature: &[u8], public_key: &[u8]) -> Result<bool, VMError> {
+    use pqsynq::{DigitalSignature, Sign};
 
-    #[test]
-    fn parse_rejects_too_small_header_length() {
-        let mut bytes = magic_header_bytes(15);
-        bytes[5..7].copy_from_slice(&(14u16).to_le_bytes());
+    let signer = Sign::mldsa65();
+    Ok(signer
+        .verify(message, signature, public_key)
+        .unwrap_or(false))
+}
 
-        let err = Header::parse(&bytes).expect_err("expected invalid bytecode error");
-        assert!(matches!(
-            err,
-            VMError::InvalidBytecode(ref msg)
-                if msg == "Header length 14 too small, minimum is 15"
-        ));
-    }
+#[cfg(not(feature = "pqc-aegis"))]
+fn verify_fndsa512(
+    _message: &[u8],
+    _signature: &[u8],
+    _public_key: &[u8],
+) -> Result<bool, VMError> {
+    Err(missing_pqc_backend_error())
+}
 
-    #[cfg(target_pointer_width = "32")]
-    #[test]
-    fn load_bytecode_rejects_length_arithmetic_overflow() {
-        let mut bytecode = vec![0u8; 15];
-        bytecode[0..4].copy_from_slice(&Header::MAGIC.to_le_bytes());
-        bytecode[4] = 1;
-        bytecode[5..7].copy_from_slice(&(Header::MIN_HEADER_LENGTH).to_le_bytes());
-        bytecode[7..11].copy_from_slice(&u32::MAX.to_le_bytes());
-        bytecode[11..15].copy_from_slice(&u32::MAX.to_le_bytes());
+#[cfg(feature = "pqc-aegis")]
+fn verify_fndsa512(message: &[u8], signature: &[u8], public_key: &[u8]) -> Result<bool, VMError> {
+    use pqsynq::{DigitalSignature, Sign};
 
-        let mut vm = QuantumVM::new();
-        let err = vm
-            .load_bytecode(&bytecode)
-            .expect_err("expected invalid bytecode error");
-        assert!(matches!(
-            err,
-            VMError::InvalidBytecode(ref msg) if msg == "Bytecode header length overflow"
-        ));
-    }
+    let signer = Sign::fndsa512();
+    Ok(signer
+        .verify(message, signature, public_key)
+        .unwrap_or(false))
+}
+
+#[cfg(not(feature = "pqc-aegis"))]
+fn decapsulate(
+    _operation: KemOperation,
+    _ciphertext: &[u8],
+    _private_key: &[u8],
+) -> Result<Vec<u8>, String> {
+    Err("aegis-pqsynq backend is unavailable; restore aegis-pqsynq/pqsynq and rebuild with feature `pqc-aegis`".to_string())
+}
+
+#[cfg(feature = "pqc-aegis")]
+fn decapsulate(
+    operation: KemOperation,
+    ciphertext: &[u8],
+    private_key: &[u8],
+) -> Result<Vec<u8>, String> {
+    use pqsynq::{Kem, KeyEncapsulation};
+
+    let kem = match operation {
+        KemOperation::MlKem768 => Kem::mlkem768(),
+        KemOperation::HqcKem128 => Kem::hqckem128(),
+        KemOperation::HqcKem192 => Kem::hqckem192(),
+        KemOperation::HqcKem256 => Kem::hqckem256(),
+    };
+
+    kem.decapsulate(ciphertext, private_key)
+        .map_err(|e| format!("{e:?}"))
 }

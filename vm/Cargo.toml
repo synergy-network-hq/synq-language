@@ -3,8 +3,9 @@ name = "quantumvm"
 version = "1.0.0"
 edition = "2021"
 
-[dependencies]
-pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa", "hqckem"] }
+[features]
+default = []
+pqc-aegis = ["dep:pqsynq"]
 
-[dev-dependencies]
-pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa", "hqckem"] }
+[dependencies]
+pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", default-features = false, features = ["mlkem", "mldsa", "fndsa", "hqckem"], optional = true }

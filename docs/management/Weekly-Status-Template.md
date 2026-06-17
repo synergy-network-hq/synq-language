@@ -1,5 +1,9 @@
 # SynQ Weekly Status and Risk Cadence Template
 
+> Canonical status note (2026-05-26): this template is for reporting cadence
+> only. It is not an implementation-status source of truth; use
+> `../SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+
 ## Purpose
 
 This template standardizes weekly program reporting, risk tracking, and technical decision capture.

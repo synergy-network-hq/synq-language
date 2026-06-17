@@ -1,5 +1,9 @@
 # SynQ Release Milestones
 
+> Canonical status note (2026-05-26): this release plan is a historical planning
+> document unless reconciled by the canonical task register at
+> `../SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+
 ## Purpose
 
 This document defines milestone gates, owners, and target dates for SynQ delivery. It is the canonical release plan used by engineering, QA, and security tracks.

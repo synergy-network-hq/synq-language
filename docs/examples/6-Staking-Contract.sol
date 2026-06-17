@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Generated from SynQ source
+// WARNING: Solidity compatibility preview only; not production deployable.
 // This file is auto-generated - do not edit manually
 
 // PQC library imports (to be implemented)

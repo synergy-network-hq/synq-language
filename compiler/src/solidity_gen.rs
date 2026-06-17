@@ -3,6 +3,9 @@
 
 use crate::ast::*;
 
+pub const SOLIDITY_COMPATIBILITY_WARNING: &str =
+    "WARNING: Solidity compatibility preview only; not production deployable.";
+
 pub struct SolidityGenerator {
     output: String,
     indent_level: usize,
@@ -22,6 +25,7 @@ impl SolidityGenerator {
         self.writeln("pragma solidity ^0.8.0;");
         self.writeln("");
         self.writeln("// Generated from SynQ source");
+        self.writeln(&format!("// {SOLIDITY_COMPATIBILITY_WARNING}"));
         self.writeln("// This file is auto-generated - do not edit manually");
         self.writeln("");
 

@@ -1,5 +1,9 @@
 # SynQ Definition of Done (DoD)
 
+> Canonical status note (2026-05-26): this DoD remains policy guidance. The
+> current proof-backed task register is
+> `../SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+
 ## Purpose
 
 This document defines non-negotiable completion criteria for SynQ workstreams. No task is considered complete unless all applicable DoD criteria are satisfied.

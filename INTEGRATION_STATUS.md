@@ -1,5 +1,10 @@
 # aegis-pqsynq Integration Status
 
+> Canonical status note (2026-05-26): this file is a historical integration
+> snapshot. The authoritative task register is
+> `docs/SynQ-Aegis-AIVM-Canonical-Tasks.md`; use that register and its proof log
+> for current completion status.
+
 ## ✅ Completed Integration
 
 aegis-pqsynq has been **fully moved into SynQ** as an internal dependency:

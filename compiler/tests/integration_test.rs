@@ -1,8 +1,12 @@
 use compiler::ast::{ContractPart, Expression, Literal, SourceUnit, Statement};
 use compiler::{parser, CodeGenerator};
-use pqsynq::{Kem, KeyEncapsulation};
 use quantumvm::{OpCode, QuantumVM};
+
+#[cfg(feature = "pqc-aegis")]
+use pqsynq::{Kem, KeyEncapsulation};
+#[cfg(feature = "pqc-aegis")]
 use std::fs;
+#[cfg(feature = "pqc-aegis")]
 use std::path::PathBuf;
 
 const SIMPLE_CONTRACT_WITH_FUNCTION_PARAMS: &str = r#"
@@ -189,6 +193,7 @@ contract VerifyAlias {
     );
 }
 
+#[cfg(feature = "pqc-aegis")]
 fn encode_hex(bytes: &[u8]) -> String {
     let mut out = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
@@ -197,6 +202,7 @@ fn encode_hex(bytes: &[u8]) -> String {
     out
 }
 
+#[cfg(feature = "pqc-aegis")]
 fn render_fixture_source(file_name: &str, ciphertext: &[u8], private_key: &[u8]) -> String {
     let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../smart-contracts/tests")
@@ -223,6 +229,7 @@ fn code_section(bytecode: &[u8]) -> &[u8] {
     &bytecode[header_length..header_length + code_length]
 }
 
+#[cfg(feature = "pqc-aegis")]
 fn run_hqckem_fixture(fixture_file: &str, opcode: OpCode, kem: Kem) {
     let (public_key, private_key) = kem.keygen().expect("keygen should succeed");
     let (ciphertext, expected_shared_secret) = kem
@@ -256,6 +263,7 @@ fn run_hqckem_fixture(fixture_file: &str, opcode: OpCode, kem: Kem) {
     assert_eq!(shared_secret, expected_shared_secret);
 }
 
+#[cfg(feature = "pqc-aegis")]
 fn run_hqckem_fixture_expect_failure(
     fixture_file: &str,
     kem_for_ciphertext: Kem,
@@ -279,6 +287,7 @@ fn run_hqckem_fixture_expect_failure(
     );
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem128_contract_fixture_parser_codegen_vm_e2e() {
     run_hqckem_fixture(
@@ -288,6 +297,7 @@ fn test_hqckem128_contract_fixture_parser_codegen_vm_e2e() {
     );
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem192_contract_fixture_parser_codegen_vm_e2e() {
     run_hqckem_fixture(
@@ -297,6 +307,7 @@ fn test_hqckem192_contract_fixture_parser_codegen_vm_e2e() {
     );
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem256_contract_fixture_parser_codegen_vm_e2e() {
     run_hqckem_fixture(
@@ -306,6 +317,7 @@ fn test_hqckem256_contract_fixture_parser_codegen_vm_e2e() {
     );
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem128_contract_fixture_rejects_mismatched_private_key() {
     let kem = Kem::hqckem128();
@@ -313,6 +325,7 @@ fn test_hqckem128_contract_fixture_rejects_mismatched_private_key() {
     run_hqckem_fixture_expect_failure("hqckem128-decap-fixture.synq", kem, other_sk);
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem192_contract_fixture_rejects_mismatched_private_key() {
     let kem = Kem::hqckem192();
@@ -320,6 +333,7 @@ fn test_hqckem192_contract_fixture_rejects_mismatched_private_key() {
     run_hqckem_fixture_expect_failure("hqckem192-decap-fixture.synq", kem, other_sk);
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem256_contract_fixture_rejects_mismatched_private_key() {
     let kem = Kem::hqckem256();

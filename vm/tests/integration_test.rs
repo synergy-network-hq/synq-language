@@ -1,5 +1,7 @@
+use quantumvm::{Assembler, OpCode, QuantumVM, VMError};
+
+#[cfg(feature = "pqc-aegis")]
 use pqsynq::{DigitalSignature, Kem, KeyEncapsulation, Sign};
-use quantumvm::{Assembler, OpCode, QuantumVM};
 
 #[test]
 fn test_basic_arithmetic() {
@@ -20,6 +22,20 @@ fn test_basic_arithmetic() {
     assert_eq!(result, 30);
 }
 
+#[test]
+fn test_truncated_header_returns_error_instead_of_panicking() {
+    let mut vm = QuantumVM::new();
+    let err = vm
+        .load_bytecode(&[0; 14])
+        .expect_err("truncated header should be rejected");
+
+    assert!(matches!(
+        err,
+        VMError::InvalidBytecode(message) if message.contains("Header too short")
+    ));
+}
+
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_mldsa_verify() {
     let mut assembler = Assembler::new();
@@ -58,6 +74,7 @@ fn test_mldsa_verify() {
     assert!(result);
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_mlkem_decaps() {
     let mut assembler = Assembler::new();
@@ -91,6 +108,7 @@ fn test_mlkem_decaps() {
     assert_eq!(shared_secret.len(), 32); // ML-KEM-768 shared secret is 32 bytes
 }
 
+#[cfg(feature = "pqc-aegis")]
 fn run_hqckem_decaps_test(opcode: OpCode, kem: Kem) {
     let mut assembler = Assembler::new();
 
@@ -115,16 +133,19 @@ fn run_hqckem_decaps_test(opcode: OpCode, kem: Kem) {
     assert_eq!(ss1, ss2);
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem128_decaps() {
     run_hqckem_decaps_test(OpCode::HQCKEM128KeyExchange, Kem::hqckem128());
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem192_decaps() {
     run_hqckem_decaps_test(OpCode::HQCKEM192KeyExchange, Kem::hqckem192());
 }
 
+#[cfg(feature = "pqc-aegis")]
 #[test]
 fn test_hqckem256_decaps() {
     run_hqckem_decaps_test(OpCode::HQCKEM256KeyExchange, Kem::hqckem256());

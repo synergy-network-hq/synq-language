@@ -3,12 +3,81 @@
 //!
 //! This is the core integration layer that connects SynQ smart contracts with post-quantum cryptography.
 
-use pqsynq::{
-    DigitalSignature, Kem, KemAlgorithm, KeyEncapsulation, PqcError, Sign, SignAlgorithm,
-};
+#[cfg(feature = "pqc-aegis")]
+use pqsynq::{DigitalSignature, KeyEncapsulation};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SignAlgorithm {
+    Mldsa44,
+    Mldsa65,
+    Mldsa87,
+    Fndsa512,
+    Fndsa1024,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KemAlgorithm {
+    Mlkem512,
+    Mlkem768,
+    Mlkem1024,
+    Hqckem128,
+    Hqckem192,
+    Hqckem256,
+}
+
+#[cfg(feature = "pqc-aegis")]
+pub type PqcError = pqsynq::PqcError;
+
+#[cfg(not(feature = "pqc-aegis"))]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PqcError {
+    message: String,
+}
+
+#[cfg(not(feature = "pqc-aegis"))]
+impl PqcError {
+    fn backend_unavailable() -> Self {
+        Self {
+            message: "aegis-pqsynq backend is unavailable; restore aegis-pqsynq/pqsynq and build with feature `pqc-aegis`".to_string(),
+        }
+    }
+}
+
+#[cfg(not(feature = "pqc-aegis"))]
+impl std::fmt::Display for PqcError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+#[cfg(not(feature = "pqc-aegis"))]
+impl std::error::Error for PqcError {}
 
 /// PQC operation helpers for code generation and runtime
 pub struct PqcIntegration;
+
+#[cfg(feature = "pqc-aegis")]
+fn to_pqsynq_sign_algorithm(algorithm: SignAlgorithm) -> pqsynq::SignAlgorithm {
+    match algorithm {
+        SignAlgorithm::Mldsa44 => pqsynq::SignAlgorithm::Mldsa44,
+        SignAlgorithm::Mldsa65 => pqsynq::SignAlgorithm::Mldsa65,
+        SignAlgorithm::Mldsa87 => pqsynq::SignAlgorithm::Mldsa87,
+        SignAlgorithm::Fndsa512 => pqsynq::SignAlgorithm::Fndsa512,
+        SignAlgorithm::Fndsa1024 => pqsynq::SignAlgorithm::Fndsa1024,
+    }
+}
+
+#[cfg(feature = "pqc-aegis")]
+fn to_pqsynq_kem_algorithm(algorithm: KemAlgorithm) -> pqsynq::KemAlgorithm {
+    match algorithm {
+        KemAlgorithm::Mlkem512 => pqsynq::KemAlgorithm::Mlkem512,
+        KemAlgorithm::Mlkem768 => pqsynq::KemAlgorithm::Mlkem768,
+        KemAlgorithm::Mlkem1024 => pqsynq::KemAlgorithm::Mlkem1024,
+        KemAlgorithm::Hqckem128 => pqsynq::KemAlgorithm::Hqckem128,
+        KemAlgorithm::Hqckem192 => pqsynq::KemAlgorithm::Hqckem192,
+        KemAlgorithm::Hqckem256 => pqsynq::KemAlgorithm::Hqckem256,
+    }
+}
 
 impl PqcIntegration {
     fn normalize(name: &str) -> String {
@@ -131,7 +200,16 @@ impl PqcIntegration {
         message: &[u8],
         signature: &[u8],
     ) -> Result<bool, PqcError> {
-        let signer = Sign::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = (algorithm, public_key, message, signature);
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let signer = pqsynq::Sign::new(to_pqsynq_sign_algorithm(algorithm));
+
+        #[cfg(feature = "pqc-aegis")]
         signer.verify(message, signature, public_key)
     }
 
@@ -142,7 +220,16 @@ impl PqcIntegration {
         message: &[u8],
         signature: &[u8],
     ) -> Result<bool, PqcError> {
-        let signer = Sign::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = (algorithm, public_key, message, signature);
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let signer = pqsynq::Sign::new(to_pqsynq_sign_algorithm(algorithm));
+
+        #[cfg(feature = "pqc-aegis")]
         signer.verify(message, signature, public_key)
     }
 
@@ -153,7 +240,19 @@ impl PqcIntegration {
         ciphertext: &[u8],
         secret_key: &[u8],
     ) -> Result<Vec<u8>, PqcError> {
-        let kem = Kem::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = (algorithm, ciphertext, secret_key);
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let kem = {
+            use pqsynq::Kem;
+            Kem::new(to_pqsynq_kem_algorithm(algorithm))
+        };
+
+        #[cfg(feature = "pqc-aegis")]
         kem.decapsulate(ciphertext, secret_key)
     }
 
@@ -164,7 +263,19 @@ impl PqcIntegration {
         ciphertext: &[u8],
         secret_key: &[u8],
     ) -> Result<Vec<u8>, PqcError> {
-        let kem = Kem::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = (algorithm, ciphertext, secret_key);
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let kem = {
+            use pqsynq::Kem;
+            Kem::new(to_pqsynq_kem_algorithm(algorithm))
+        };
+
+        #[cfg(feature = "pqc-aegis")]
         kem.decapsulate(ciphertext, secret_key)
     }
 
@@ -172,13 +283,34 @@ impl PqcIntegration {
     pub fn generate_signature_keypair(
         algorithm: SignAlgorithm,
     ) -> Result<(Vec<u8>, Vec<u8>), PqcError> {
-        let signer = Sign::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = algorithm;
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let signer = pqsynq::Sign::new(to_pqsynq_sign_algorithm(algorithm));
+
+        #[cfg(feature = "pqc-aegis")]
         signer.keygen()
     }
 
     /// Generate a key pair for KEM
     pub fn generate_kem_keypair(algorithm: KemAlgorithm) -> Result<(Vec<u8>, Vec<u8>), PqcError> {
-        let kem = Kem::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = algorithm;
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let kem = {
+            use pqsynq::Kem;
+            Kem::new(to_pqsynq_kem_algorithm(algorithm))
+        };
+
+        #[cfg(feature = "pqc-aegis")]
         kem.keygen()
     }
 
@@ -187,15 +319,26 @@ impl PqcIntegration {
         algorithm: KemAlgorithm,
         public_key: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>), PqcError> {
-        let kem = Kem::new(algorithm);
+        #[cfg(not(feature = "pqc-aegis"))]
+        {
+            let _ = (algorithm, public_key);
+            return Err(PqcError::backend_unavailable());
+        }
+
+        #[cfg(feature = "pqc-aegis")]
+        let kem = {
+            use pqsynq::Kem;
+            Kem::new(to_pqsynq_kem_algorithm(algorithm))
+        };
+
+        #[cfg(feature = "pqc-aegis")]
         kem.encapsulate(public_key)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::PqcIntegration;
-    use pqsynq::KemAlgorithm;
+    use super::{KemAlgorithm, PqcIntegration};
 
     #[test]
     fn detects_hqckem_functions() {
@@ -219,6 +362,7 @@ mod tests {
         ));
     }
 
+    #[cfg(feature = "pqc-aegis")]
     #[test]
     fn hqckem_roundtrip_via_integration_helper() {
         let (pk, sk) = PqcIntegration::generate_kem_keypair(KemAlgorithm::Hqckem128)

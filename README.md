@@ -4,16 +4,37 @@ SynQ is a domain-specific language (DSL) designed for writing **quantum-resistan
 
 ---
 
+## Current Implementation Status
+
+The verified implementation currently supports a core Rust compiler/VM/CLI test loop and a TypeScript SDK RPC envelope test loop. `aegis-pqsynq` has been restored and the PQC-backed compiler, VM, no-std, wasm smoke, and full workspace test paths pass locally.
+
+SynQ's target execution environment is Synergy AIVM. The local `quantumvm` crate is currently the SynQ bytecode executor and is now wired into `synergy-aivm/runtime/aivm-core` as an initial `synq-bytecode-v1` artifact handoff. SynQ is not complete until those artifacts deploy and execute through AIVM on Synergy TESTNET.
+
+The canonical completion backlog is maintained in `docs/SynQ-Project-Status-and-Execution-Backlog.md`.
+
+Current CLI commands:
+
+```bash
+cargo run -p cli -- compile --path docs/examples/1-ERC20-Token.synq
+cargo run -p cli -- run --path docs/examples/1-ERC20-Token.compiled.synq
+cargo run -p cli -- verify --source docs/examples/1-ERC20-Token.synq --bytecode docs/examples/1-ERC20-Token.compiled.synq
+```
+
+Planned but not complete yet: `qsc deploy`, `qsc test`, `qsc estimate`, `qsc trace`, full ABI artifacts, and Synergy TESTNET deployment support.
+
+---
+
 ## 🔒 Post-Quantum Cryptography Support
 
-SynQ natively supports:
+SynQ's language design targets these PQC families. Current implementation status depends on the restored backend noted above.
 
-| Algorithm | Purpose | Type(s) |
-|----------|---------|---------|
-| ML-DSA | Digital Signatures | `MLDSAKeyPair`, `MLDSASignature` |
-| FN-DSA | Compact Signatures | `FNDSAKeyPair`, `FNDSASignature` |
-| ML-KEM | Key Encapsulation | `MLKEMKeyPair`, `MLKEMCiphertext` |
-| SLH-DSA | Stateless Hash Signatures | `SLHDSAKeyPair`, `SLHDSASignature` |
+| Algorithm | Purpose | Type(s) | Current status |
+|----------|---------|---------|----------------|
+| ML-DSA | Digital Signatures | `MLDSAKeyPair`, `MLDSASignature` | PQC-backed VM/compiler tests pass through `aegis-pqsynq` |
+| FN-DSA | Compact Signatures | `FNDSAKeyPair`, `FNDSASignature` | PQC-backed VM/compiler tests pass through `aegis-pqsynq` |
+| ML-KEM | Key Encapsulation | `MLKEMKeyPair`, `MLKEMCiphertext` | PQC-backed VM/compiler tests pass through `aegis-pqsynq` |
+| HQC-KEM | Key Encapsulation | `Bytes` fixtures today | PQC-backed VM/compiler tests pass through `aegis-pqsynq`; official KAT vector packs are optional locally and strict with `PQSYNQ_REQUIRE_NIST_KATS=1` |
+| SLH-DSA | Stateless Hash Signatures | `SLHDSAKeyPair`, `SLHDSASignature` | De-scoped/disabled in current semantic and VM paths |
 
 > Security levels are specified by variant (e.g., ML-DSA-65 for Level 3, ML-KEM-768 for Level 3).
 
@@ -102,15 +123,16 @@ SynQ includes a full-featured DAO contract example with:
 ### 🛠 CLI Compiler
 
 ```bash
-qsc compile SynQDAO.synq --target mlkem-768
-qsc deploy --contract SynQDAO --gas-overhead 15000
-qsc estimate --function cast_vote --args ...
+cargo run -p cli -- compile --path SynQDAO.synq
+cargo run -p cli -- verify --source SynQDAO.synq --bytecode SynQDAO.compiled.synq --run
 ```
 
 ### 🧪 Simulation Tools
 
-- `qsc simulate` — test gas use and verify PQ-Gas capping
-- `qsc trace` — debug `require_pqc` branches
+- `compile` — generate SynQ bytecode and Solidity compatibility output
+- `run` — execute compiled SynQ bytecode locally
+- `verify` — confirm deterministic source-to-bytecode generation, optionally then run
+- Planned: `test`, `deploy`, `estimate`, and `trace`
 
 ---
 
@@ -143,8 +165,10 @@ qsc estimate --function cast_vote --args ...
 | `Gas-Model.md` | Full resource and cost economics |
 | `SynQDAO_Example.md` | Reference DAO with full PQC controls |
 | `SynQ-VM-Specification.md` | VM runtime architecture and opcodes |
+| `SynQ-AIVM-Execution-Integration.md` | Current SynQ-to-AIVM handoff and remaining TESTNET execution requirements |
 | `Version-Pragma.md` | Version pragma documentation |
 | `Examples-Index.md` | Index of all example contracts |
+| `SynQ-Project-Status-and-Execution-Backlog.md` | Canonical verified completion TODO |
 
 ---
 

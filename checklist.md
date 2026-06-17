@@ -1,5 +1,10 @@
 # SynQ Project Checklist and Roadmap v1.0
 
+> Canonical status note (2026-05-26): this file is a historical planning
+> reference. The authoritative task register is
+> `docs/SynQ-Aegis-AIVM-Canonical-Tasks.md`; do not mark implementation status
+> from this file unless the canonical register cites current proof.
+
 **Last Updated:** 2025
 **Current Status:** Core infrastructure complete, integration in progress, production readiness pending
 

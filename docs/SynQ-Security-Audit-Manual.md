@@ -1,5 +1,9 @@
 # SynQ Security Audit Manual
 
+> Canonical status note (2026-05-26): this manual remains useful security
+> process documentation, but it is not the current implementation checklist.
+> Current task status lives in `SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+
 Version: 1.0
 Last Updated: 2026-02-09
 Audience: New SynQ auditors, internal security engineers, third-party audit partners

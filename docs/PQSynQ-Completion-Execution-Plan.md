@@ -1,5 +1,10 @@
 # Aegis-PQSynQ Completion Execution Plan
 
+> Canonical status note (2026-05-26): this file is a historical execution plan.
+> The authoritative task register is
+> `SynQ-Aegis-AIVM-Canonical-Tasks.md`; use the canonical register and proof log
+> for current completion status.
+
 ## Objective
 
 Deliver a production-grade `aegis-pqsynq` foundation that SynQ can rely on for secure, verifiable smart-contract cryptography without documentation drift, fake-green CI, or unsupported API claims.

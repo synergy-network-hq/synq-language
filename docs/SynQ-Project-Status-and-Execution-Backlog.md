@@ -1,1036 +1,382 @@
-# SynQ Project Status and Execution Backlog
-
-**Document Purpose:** Single source of truth for SynQ delivery status, active blockers, and completion tasks required to reach production-ready smart contract authoring and execution.
-
-**Last Audited:** 2026-02-16
-
-**Audit Scope:**
-
-- Workspace crates: `compiler`, `vm`, `cli`, `aegis-pqsynq/pqsynq`, `sdk`
-- Documentation and specs under `docs/`
-- Build/test execution under default features and `--all-targets`
-- Feature-complete claims validation (`aegis-pqsynq --all-features`)
-
-**Build Baseline (Verified):**
-
-- `cargo test --workspace --all-targets` -> **PASS**
-- `cargo test -p aegis-pqsynq --all-features --all-targets` -> **PASS**
-- `cargo test -p cli --test integration_test --locked` -> **PASS** (compile/run + deterministic verify + tamper rejection + `.synq` source overwrite guard)
-- `cargo test -p compiler --test semantic_test --locked` -> **PASS** (symbol/return semantic validation suite)
-- `cargo clippy -p aegis-pqsynq --all-targets --all-features --no-deps -- -D warnings` -> **PASS**
-- `bash aegis-pqsynq/pqsynq/scripts/run_tests.sh` -> **PASS**
-- `cargo audit` -> **PASS** (no CVEs or in-scope unresolved advisory findings)
-- `cargo run -p cli -- compile --path docs/examples/{1..6}-*.synq` -> **PASS** (all six canonical examples now compile and emit `.compiled.synq` + `.sol`)
-
-**Current PQ Foundation Status (2026-02-09 Update):**
-
-- Module naming standardized to `aegis-pqsynq` (package) while preserving `pqsynq` import compatibility.
-- `full` feature now maps to the implemented algorithm set (`mlkem`, `mldsa`, `fndsa`, `hqckem`, `std`).
-- Detached signature helpers are implemented and exercised in full-mode tests.
-- Contextual signing/verification is implemented for ML-DSA and explicitly returns `NotImplemented` for FN-DSA.
-- Legacy “full” tests/CI/scripts that referenced unsupported CMCE/SLH APIs have been replaced with implementation-aligned coverage.
-- HQC support is now implemented in `aegis-pqsynq`; CMCE/SLH remain de-scoped for current smart-contract profile.
-- Signature FFI wrappers (ML-DSA/FN-DSA) now propagate structured errors instead of assert/unchecked failure paths.
-- Deterministic replay fixtures are now present with integrity manifest checks for all currently shipped SynQ profile algorithms.
-- Official NIST replay harness now validates shipped algorithms (ML-KEM/ML-DSA/FN-DSA strict replay, HQC compatibility replay path).
-- Deterministic compliance evidence now emits `pqsynq-compliance-report.md` with source SHA-256 inventory + per-check logs.
-- WASI toolchain bootstrap is now deterministic in both local and CI flows (`bootstrap_wasi_sdk.sh` + workflow cache/env wiring).
-- Key lifecycle controls are now documented and implemented via `SecretBytes` + zeroization helpers in `pqsynq`.
-- CLI deterministic verification is now available (`cli verify --source --bytecode [--run]`) and tested for both match and tamper mismatch behavior.
-- CLI compile output now protects `.synq` source files from overwrite by emitting `.compiled.synq` when input already ends with `.synq`.
-- Compiler parser compatibility now supports Solidity-style SynQ contract fixtures used in `docs/examples`:
-  - Solidity-style state declarations (`Type public name;`)
-  - Solidity-style params/events (`Type name`, `Type indexed name`)
-  - mapping types (`mapping(K => V)`), tuple return signatures (`-> (T1, T2, ...)`)
-  - contract-local `struct`/`enum` declarations
-  - typed local declarations (`UInt256 x = ...;`) and richer assignment lvalues
-  - `msg.value`, object/array literals, and `else if` chains
-- Compiler semantic analysis baseline is now integrated into CLI compile flow:
-  - undefined symbol detection for assignments/references
-  - duplicate state variable and duplicate parameter rejection
-  - return arity enforcement (void vs non-void)
-  - constructor/function/block scope symbol handling baseline
-  - semantic regression suite + CLI failure-path test coverage
-
----
-
-## 1. Executive Status (No Spin)
-
-SynQ is **not** fully built out for production smart-contract development yet. The repository contains a promising core (parser grammar, AST skeleton, bytecode assembler, VM execution loop, and integrated ML-DSA/FN-DSA/ML-KEM primitives), but there is a material gap between:
-
-1. documented capabilities,
-2. test coverage/validation guarantees,
-3. and implemented language/runtime behavior.
-
-### Current Delivery Position
-
-- **Core cryptographic substrate (ML-KEM/ML-DSA/FN-DSA + optional HQC):** operational.
-- **Smart contract language front-end:** partially implemented; parser compatibility has improved substantially, and semantic analysis baseline now rejects common unsafe constructs.
-- **Code generation:** functionally incomplete for non-trivial contracts.
-- **VM execution model:** usable for small opcode programs and direct PQC opcodes, but not yet aligned with a robust contract lifecycle model.
-- **CLI and SDK:** early-stage scaffolding; not yet a complete developer workflow.
-- **Production readiness:** not achieved.
-
-### Realistic Completion Scorecard (Evidence-Based)
-
-- Language Spec to Implementation Parity: **40%**
-- Compiler Front-End Completeness: **45%**
-- Bytecode/IR and Codegen Correctness: **30%**
-- VM Contract Runtime Completeness: **45%**
-- PQC Coverage vs Claimed Surface: **40%**
-- CLI Developer Workflow: **25%**
-- SDK Readiness: **20%**
-- Testing and Quality Gates: **40%**
-- Security/Hardening/Operationalization: **25%**
-- Release Readiness: **10%**
-
-**Overall program completeness estimate:** **~40-45%** toward production-ready SynQ smart contract platform.
-
----
-
-## 2. What Is Implemented Today (Confirmed)
-
-### 2.1 Workspace and Crate Topology
-
-- Rust workspace with active members for:
-  - `vm`
-  - `compiler`
-  - `cli`
-  - `aegis-pqsynq/pqsynq`
-  - internal PQ crates for ML-KEM/ML-DSA/FN-DSA
-- Workspace keeps CMCE and SLH-DSA out of current smart-contract profile; HQC is available via `aegis-pqsynq` feature gating.
+# SynQ Canonical Completion TODO
+
+> Canonical status note (2026-05-26): this backlog is superseded by
+> `SynQ-Aegis-AIVM-Canonical-Tasks.md`. Keep this file only as a historical
+> reference unless a future task explicitly reconciles it.
+
+**Purpose:** This is the single canonical engineering backlog for taking SynQ from the current checkout to a complete smart contract language and runtime that can be tested on Synergy TESTNET.
+
+**How this list was produced:** Status below is based on direct verification of the repo, build behavior, tests, source files, examples, and SDK. It does not rely on prior checklist claims.
+
+## Verified Current State
+
+### Verified Working
+
+- `cargo metadata --no-deps --format-version 1` succeeds for the workspace.
+- `cargo test --workspace --all-features --all-targets` passes after restoring `aegis-pqsynq` and adding the PQClean randombytes compatibility export needed by the bundled HQC backend.
+- `compiler`, `vm`, and `cli` have a working baseline for simple parsing, semantic checks, bytecode generation, VM arithmetic/control flow, example compilation, bytecode verification, and CLI compile/run/verify.
+- The bundled `pqrust` ML-KEM, ML-DSA, FN-DSA, and HQC-KEM crates compile and pass their own default tests.
+- Restored `aegis-pqsynq/pqsynq` is now a workspace member and the real PQC-backed paths pass:
+  - `cargo test -p quantumvm --features pqc-aegis`
+  - `cargo test -p compiler --features pqc-aegis`
+  - `cargo test -p pqsynq-no-std-smoke --features pqc-aegis`
+  - `cargo run -p wasm-runtime-smoke --features pqc-aegis`
+  - `cargo test -p aegis-pqsynq --all-features --all-targets`
+- `sdk` has a working TypeScript verification path:
+  - `npx tsc --noEmit` passes.
+  - `npm run test:integration` passes.
+  - RPC envelope, transaction submission envelope, balance/block calls, JSON-RPC error handling, and explicit unsupported-PQC-key errors are tested.
+- `synergy-aivm/runtime/aivm-core` now builds and has a first tested execution adapter that accepts `synq-bytecode-v1` artifacts and executes them through the current SynQ VM path.
+- `synergy-aivm/verifier/verifier-core` now has a valid Rust crate target and baseline attestation verification tests.
+- `synergy-aivm/runtime/aivm-node` compiles, but it remains a placeholder node binary with no runtime server behavior.
+
+### Verified Blocked
+
+- Official NIST KAT replay files for `aegis-pqsynq` are not present in this checkout. The replay tests now skip missing official files by default and become strict when `PQSYNQ_REQUIRE_NIST_KATS=1`.
+- macOS root volume temp space is critically low in the verified environment. Rust builds that need temp files may require `TMPDIR=/Volumes/xcode/tmp` until the root volume is cleaned.
+- Synergy TESTNET runtime/RPC contract deployment methods have not yet been verified live.
+- AIVM is not yet the production execution environment for TESTNET contracts. It now has a baseline SynQ handoff, but no deploy/call/state/account/storage/receipt lifecycle.
+
+### Verified Incomplete
+
+- SynQ is not yet a complete smart contract platform.
+- The current language frontend can parse and compile useful examples, but it is not a frozen language spec with exhaustive conformance tests.
+- The current `quantumvm` path is an interim SynQ bytecode executor. SynQ readiness depends on integrating that path into Synergy AIVM or replacing it with a native AIVM SynQ runtime.
+- AIVM does not yet implement a full contract lifecycle model with deploy/call/state/account/storage/receipt semantics suitable for TESTNET execution.
+- The CLI does not yet implement testnet deploy, test, estimate, trace, artifact packaging, or source verification workflows.
+- The SDK does not yet implement real PQC key management, transaction signing, ABI/client generation, or Synergy TESTNET deployment flows.
+- Generated Solidity is a compatibility artifact, not a production target with implemented PQC library bindings.
+
+## Completion Definition
+
+SynQ is complete only when all of these are true:
+
+- The language spec is frozen for v1 and every documented syntax form has parser, semantic, codegen, and negative tests.
+- A real PQC backend is restored or replaced, tested, and wired through compiler, VM, CLI, SDK, no-std smoke, and wasm smoke paths.
+- Contract deploy/call/state behavior is deterministic and implemented in Synergy AIVM and the Synergy TESTNET RPC/transaction layer.
+- Compiled SynQ artifacts execute in Synergy AIVM. A local `quantumvm` pass alone is not sufficient for completion.
+- At least one canonical SynQ contract can be compiled, packaged, deployed to Synergy TESTNET, called, and verified from CLI and SDK.
+- Security, gas, ABI, storage, and source-verification rules are documented and enforced by tests.
+- CI runs the full default suite plus PQC-enabled suite when backend files are present.
+- Public docs and examples describe only implemented behavior.
+
+## P0: External Backend And Build Foundation
+
+- [x] **BUILD-001: Make default workspace load without unavailable `aegis-pqsynq`.**
+  - Complete.
+  - Default workspace metadata and tests run.
+
+- [x] **BUILD-002: Restore `aegis-pqsynq/pqsynq` from external SSD.**
+  - Complete.
+  - `aegis-pqsynq/pqsynq` is a workspace member.
+  - `pqsynq = { package = "aegis-pqsynq", path = "../aegis-pqsynq/pqsynq", ... }` is restored in `vm`, `compiler`, `tooling/no-std-smoke`, and `tooling/wasm-runtime-smoke`.
+  - Acceptance verified: `cargo test -p quantumvm --features pqc-aegis`, `cargo test -p compiler --features pqc-aegis`, no-std smoke, wasm smoke, and `cargo test -p aegis-pqsynq --all-features --all-targets` all pass.
+
+- [ ] **BUILD-003: Decide final PQC backend ownership.**
+  - Either keep `aegis-pqsynq` as the canonical facade or replace it with direct wrappers over bundled `pqrust` crates.
+  - Acceptance: one documented backend abstraction, no duplicate crypto ownership, no dead dependency path.
+
+- [ ] **BUILD-004: Add official NIST KAT artifact policy.**
+  - Store or mount the official vector packs consistently.
+  - Keep `PQSYNQ_REQUIRE_NIST_KATS=1` strict mode for release/compliance runs.
+  - Acceptance: release profile fails when official vector packs are absent; local profile can skip with an explicit message.
+
+- [ ] **BUILD-005: Add CI profiles.**
+  - Default profile: no external PQC backend required.
+  - PQC profile: real backend required.
+  - AIVM profile: builds `synergy-aivm/runtime/aivm-core`, `synergy-aivm/runtime/aivm-node`, and `synergy-aivm/verifier/verifier-core`.
+  - Acceptance: CI clearly distinguishes default pass, PQC-backend-required pass, and AIVM integration pass.
+
+## P0: Language Frontend
+
+- [ ] **LANG-001: Freeze SynQ v1 grammar.**
+  - Decide which forms are in v1: contracts, constructors, functions, modifiers, annotations, structs, enums, arrays, mappings, events, imports, version pragmas, `require_pqc`, and gas decorators.
+  - Acceptance: `specs/synq.dsl` and parser grammar match exactly.
+
+- [ ] **LANG-002: Build parser conformance suite.**
+  - Add positive and negative parser fixtures for every grammar feature.
+  - Acceptance: every documented syntax form has tests with expected AST shape or expected parse error.
+
+- [ ] **LANG-003: Add source spans to AST and diagnostics.**
+  - Track file, line, column, and source range through parser and semantic analysis.
+  - Acceptance: CLI errors point to exact source locations for parser and semantic failures.
 
-### 2.2 VM and Bytecode
+- [ ] **LANG-004: Implement imports/modules or remove them from v1 docs.**
+  - Current docs mention imports, but implementation is not complete.
+  - Acceptance: imports resolve deterministically or docs clearly defer them.
 
-- Stack VM with opcode enum and interpreter loop.
-- Instruction support includes:
-  - stack ops, arithmetic, comparisons
-  - basic control flow (`Jump`, `JumpIf`, `Call`, `Return`)
-  - memory load/store primitives
-  - PQC opcodes:
-    - ML-DSA verify
-    - FN-DSA verify
-    - ML-KEM decapsulation
-    - SLH-DSA opcode currently returns explicit runtime error (not enabled)
-- Gas meter exists with separate PQC gas accounting.
-- Assembler emits a QVM header and code stream.
+- [ ] **LANG-005: Define SynQ ABI types.**
+  - Freeze encoding for integers, bools, bytes, addresses, arrays, structs, mappings, events, return values, and PQC key/signature/ciphertext types.
+  - Acceptance: ABI spec plus round-trip tests in Rust and TypeScript.
 
-### 2.3 Compiler
+## P0: Semantic Analysis
 
-- Pest grammar exists for a broad SynQ syntax surface.
-- AST definitions exist for contracts, structs, statements, expressions, and PQC types.
-- Parser now covers contract/function/constructor/state/event annotations and lowers `for` loops into executable AST statements.
-- Parser supports Solidity-style contract fixtures used across canonical examples.
-- Semantic analyzer now executes before code generation in CLI compile path.
-- Code generator emits VM opcodes with working variable storage/load lowering and baseline `for` loop execution lowering.
-- Solidity generator exists.
+- [ ] **SEM-001: Complete type checker.**
+  - Cover state variables, locals, params, returns, structs, enums, mappings, arrays, member access, index access, calls, casts, literals, and assignment compatibility.
+  - Acceptance: invalid programs cannot reach codegen.
 
-### 2.4 PQSynQ
+- [ ] **SEM-002: Enforce function and contract lifecycle rules.**
+  - Constructor constraints, public/private visibility, payable/value behavior if supported, event emission, and return-path correctness.
+  - Acceptance: lifecycle misuse has deterministic diagnostics.
 
-- Implemented and wired algorithms in default path:
-  - ML-KEM: 512/768/1024
-  - ML-DSA: 44/65/87
-  - FN-DSA: 512/1024
-- Implemented optional KEM family:
-  - HQC-KEM: 128/192/256 (feature: `hqckem`)
-- Basic tests pass for current enabled set.
-- Benchmarks compile and run in `--all-targets` path (after alignment with enabled algorithms).
+- [ ] **SEM-003: Enforce PQC security rules.**
+  - `require_pqc` must consume real PQC verification outcomes.
+  - Domain separation for messages must be explicit and checked.
+  - Unsupported/de-scoped algorithms must fail semantically.
+  - Acceptance: replay-prone or ambiguous PQC calls fail unless explicitly allowed.
 
-### 2.5 CLI
+- [ ] **SEM-004: Enforce gas annotations.**
+  - Decide mandatory gas annotation rules for public functions and PQC calls.
+  - Acceptance: gas declarations are checked against codegen/VM estimates.
 
-- Current commands:
-  - `compile --path <file>`
-  - `run --path <bytecode>`
-  - `verify --source <file> --bytecode <artifact> [--run]`
-- Compile command outputs:
-  - `.synq` bytecode artifact for non-`.synq` source names
-  - `.compiled.synq` bytecode artifact when source already uses `.synq`
-  - `.sol` generated Solidity artifact
+## P0: Code Generation
 
-### 2.6 Existing Test Evidence
+- [ ] **CG-001: Introduce a formal SynQ IR.**
+  - Current direct AST-to-bytecode path is too brittle for a complete language.
+  - Acceptance: parser -> AST -> semantic model -> IR -> bytecode is documented and tested.
 
-- `cargo test --workspace` passes.
-- `cargo test --workspace --all-targets` passes.
-- Integration tests are present but minimal:
-  - parser smoke test
-  - VM arithmetic + PQC operations (ML-DSA, ML-KEM, HQC-KEM variants)
-  - CLI compile/run smoke test
-  - CLI deterministic verify success + tamper rejection checks
-  - semantic analysis positive/negative regression tests
-  - CLI compile gate that validates all six documented example contracts
+- [ ] **CG-002: Implement storage/member/index lowering.**
+  - Struct fields, mapping reads/writes, array reads/writes, and state-variable persistence must lower to deterministic bytecode.
+  - Acceptance: canonical token, multisig, DAO, NFT, escrow, and staking examples execute meaningful state transitions.
 
----
+- [ ] **CG-003: Implement function dispatch and returns.**
+  - ABI selector, argument decoding, return encoding, internal calls, and external calls.
+  - Acceptance: contract call by method name/selector works through VM and SDK.
 
-## 3. Critical Gaps and Risks (Truth Table)
+- [ ] **CG-004: Implement `require_pqc` lowering precisely.**
+  - Multiple PQC checks, fallback branches, revert reasons, gas behavior, and result propagation.
+  - Acceptance: positive and negative PQC contract fixtures pass with real backend.
 
-## 3.1 Compiler Front-End Gaps
+- [ ] **CG-005: Decide Solidity backend fate.**
+  - Either make Solidity output real and compilable with PQC library bindings, or mark it experimental and keep it out of testnet readiness.
+  - Acceptance: no production docs imply unimplemented Solidity deployment support.
 
-- Function-body parsing is materially improved and now handles variable declarations, assignments, `if`, `for`, `require`, `revert`, `emit`, `return`, and `require_pqc` blocks.
-- Negative grammar diagnostics and full source-span diagnostics are still incomplete.
-- Symbol resolution baseline exists, but full type semantics are still incomplete for robust contract compilation.
-- Error reporting lacks comprehensive source-location diagnostics.
+## P0: Synergy AIVM Execution Environment
 
-**Risk:** Contracts that look valid may compile into behaviorally incorrect or no-op bytecode.
+- [x] **AIVM-001: Verify and repair baseline AIVM Rust crate health.**
+  - Complete.
+  - `runtime/aivm-core` now has valid module wiring and tests.
+  - `verifier/verifier-core` now has a valid `lib.rs` target and baseline tests.
+  - `runtime/aivm-node` compiles, but it still has no operational server behavior.
 
-### 3.2 Codegen/VM Semantic Misalignment
+- [x] **AIVM-002: Add first SynQ artifact handoff into AIVM.**
+  - Complete as an initial bridge.
+  - `aivm-core::execution` accepts `synq-bytecode-v1` artifacts and executes them through the current SynQ VM dependency.
+  - Acceptance verified by an AIVM unit test that runs SynQ bytecode and returns a receipt.
 
-- Codegen still has placeholder behavior for member/index semantics, but baseline variable storage/load and loop lowering are now implemented.
-- Control-flow and call/return semantics need stricter contract execution model consistency.
-- Several AST branches are accepted but not fully lowered with correct runtime behavior.
+- [ ] **AIVM-003: Decide final AIVM/SynQ runtime ownership.**
+  - Decide whether AIVM embeds `quantumvm` as the canonical SynQ execution core or replaces it with native AIVM instruction execution.
+  - Acceptance: one runtime ownership decision documented; no duplicate diverging opcode semantics.
 
-**Risk:** Semantic drift between source intent and runtime execution.
+- [ ] **AIVM-004: Freeze the AIVM contract artifact envelope.**
+  - Define artifact kind, ABI, bytecode version, compiler version, source hash, metadata hash, gas profile, PQC backend profile, and compatibility rules.
+  - Initial draft recorded in `docs/SynQ-AIVM-Execution-Integration.md`; it is not yet a stable wire format.
+  - Acceptance: SynQ CLI, SDK, and AIVM agree on the same artifact schema byte-for-byte.
 
-### 3.3 Documentation vs Implementation Drift
+- [ ] **AIVM-005: Implement AIVM deploy/call/state/account lifecycle.**
+  - Constructor execution, contract address derivation, call dispatch, persistent storage, sender/value/nonce/chain context, return data, revert data, logs, receipts.
+  - Acceptance: AIVM lifecycle tests pass without relying on CLI-only simulation.
 
-- Language and VM docs claim broader support than what current runtime and feature flags actually provide.
-- Opcode tables and semantics in documentation are not fully synchronized with implementation details.
+- [ ] **AIVM-006: Implement AIVM host ABI and precompile surface for SynQ.**
+  - Storage, events, account context, block context, gas metering, PQC precompiles, AI model calls, transcript hooks, and deterministic error codes.
+  - Acceptance: SynQ bytecode cannot access host behavior except through documented AIVM imports/precompiles.
 
-**Risk:** Developer trust erosion and onboarding confusion.
+- [ ] **AIVM-007: Implement deterministic AI execution calls from SynQ contracts.**
+  - Define model IDs, inputs, outputs, transcript hashing, gas accounting, failure behavior, and verifier requirements for AI calls.
+  - Acceptance: a SynQ contract calls an AIVM AI function in a deterministic local test with transcript verification.
 
-### 3.4 PQC Surface Mismatch
+- [ ] **AIVM-008: Integrate AIVM verifier and transcript flow.**
+  - Move from placeholder attestation checks to canonical execution transcripts and real provider/TEE verification policy.
+  - Acceptance: contract execution receipts include deterministic transcript commitments that verifier-core can validate.
 
-- Default build intentionally enables subset algorithms.
-- `aegis-pqsynq --all-features` now passes for the implemented algorithm set (ML-KEM/ML-DSA/FN-DSA); additional families remain out of scope until implemented.
+- [ ] **AIVM-009: Wire AIVM into Synergy TESTNET node/runtime.**
+  - Identify the node process that should own AIVM execution and the RPC methods that submit/query contract execution.
+  - Acceptance: TESTNET node accepts a SynQ/AIVM artifact, executes it, and exposes a receipt through RPC.
 
-**Risk:** “Full support” messaging is currently non-actionable and blocks roadmap confidence.
+## P0: SynQ VM And Runtime
 
-### 3.5 SDK Incompleteness
+- [x] **VM-001: Reject truncated bytecode headers without panic.**
+  - Done in this session.
 
-- TypeScript SDK has placeholders and unimplemented Kyber module functions.
-- No robust package build/test/release pipeline visible in current repository state.
+- [ ] **VM-002: Formalize deploy/call lifecycle.**
+  - Define deployment artifact format, constructor execution, contract address derivation, call entry, call exit, return data, revert data, and logs in terms of AIVM-owned execution.
+  - Acceptance: deploy/call lifecycle tests pass through AIVM, with `quantumvm` used only if it is the approved embedded SynQ executor.
 
-**Risk:** Even if compiler/VM improves, application developers cannot reliably integrate.
-
-### 3.6 Smart Contract Project Scaffolding Gap
+- [ ] **VM-003: Implement persistent state storage.**
+  - State variables, mappings, arrays, and structs must persist across calls.
+  - Acceptance: state transition tests pass for canonical contracts.
 
-- `smart-contracts/examples` and `smart-contracts/tests` now include HQC-focused parser/codegen/VM fixtures.
-- Fixture breadth is still narrow (currently PQC-centric) and needs expansion to core language semantics beyond PQ flows.
+- [ ] **VM-004: Implement account/address model.**
+  - Define sender, contract address, value, nonce, chain ID, and address encoding.
+  - Acceptance: transaction context is visible to contracts and deterministic.
 
-**Risk:** Regression safety remains incomplete until non-PQC canonical fixtures are added and CI-gated.
-
----
-
-## 4. Blockers Required Before “SynQ Usable for Real Contract Development”
-
-A practical minimum bar (MVP-Production Candidate) is:
-
-1. Parser fully materializes function bodies and statements into AST.
-2. Compiler semantic baseline is active; complete full type system and PQC-specific semantic rules.
-3. Codegen produces deterministic and behaviorally correct bytecode for:
-   - variables
-   - assignments
-   - control flow
-   - returns
-   - function calls
-4. VM execution semantics pass contract-level integration tests.
-5. PQC verification and KEM flows are validated through contract-level tests, not just opcode unit tests.
-6. CLI provides deploy/test/estimate/trace workflows.
-7. SDK supports key management, tx creation/signing/submission, and contract interaction with tests.
-8. Docs are synchronized with implementation reality.
-
----
-
-## 5. Detailed Execution Backlog (Master To-Do)
-
-This section is intentionally exhaustive. Every task includes acceptance criteria so progress can be objectively measured.
-
-## 5.1 Program Management and Delivery Controls
-
-### PM-001: Establish formal release milestones
-
-- Priority: P0
-- Status: DONE (2026-02-09)
-- Deliverables:
-  - Milestone map (M0/M1/M2/M3)
-  - Exit criteria per milestone
-  - Owners and target dates
-- Acceptance Criteria:
-  - Document checked into `docs/` and reviewed
-  - Each technical workstream mapped to milestone
-  - Evidence: `docs/management/SynQ-Release-Milestones.md`
-
-### PM-002: Build a status cadence process
-
-- Priority: P0
-- Status: DONE (2026-02-09)
-- Deliverables:
-  - Weekly status template
-  - Risk register template
-  - Decision log template
-- Acceptance Criteria:
-  - Templates committed and used for at least one update cycle
-  - Evidence: `docs/management/Weekly-Status-Template.md`
-
-### PM-003: Define and enforce Definition of Done (DoD)
-
-- Priority: P0
-- Status: DONE (2026-02-09)
-- Deliverables:
-  - DoD for compiler, VM, CLI, SDK, docs
-- Acceptance Criteria:
-  - CI gates mapped to DoD checks
-  - Evidence: `docs/management/Definition-of-Done.md`
-
----
-
-## 5.2 Language and Parser Workstream
-
-### LANG-001: Implement full annotation parsing
-
-- Priority: P0
-- Status: DONE (2026-02-09)
-- Scope:
-  - Contract/function/constructor/state variable/event annotations
-  - Annotation args with expression parsing
-- Acceptance Criteria:
-  - Parser no longer has annotation TODO placeholders
-  - Unit tests cover nested/invalid annotation scenarios
-
-### LANG-002: Parse function bodies into complete statement AST
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-09)
-- Scope:
-  - variable declarations
-  - assignments
-  - if/else
-  - for loops
-  - require/revert
-  - require_pqc blocks
-  - emit/return/expression statements
-- Acceptance Criteria:
-  - AST snapshots for all statement classes
-  - Negative tests for malformed syntax
-
-### LANG-003: Parse expressions with precedence-correct AST lowering
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-09)
-- Scope:
-  - binary precedence
-  - unary ops
-  - ternary
-  - calls/member/index chains
-- Acceptance Criteria:
-  - golden AST tests for precedence edge cases
-
-### LANG-004: Implement source span tracking in parser
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - attach line/column ranges to AST nodes
-- Acceptance Criteria:
-  - parser and compiler errors include exact source location
-
-### LANG-005: Version pragma parser/runtime alignment
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - parse full comparator sets
-  - validate against compiler version
-- Acceptance Criteria:
-  - compile blocks unsupported pragma versions
-
-### LANG-006: Language conformance test suite
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - valid/invalid syntax corpus
-- Acceptance Criteria:
-  - conformance suite integrated in CI
-
----
-
-## 5.3 Semantic Analysis Workstream
-
-### SEM-001: Implement symbol table and scope resolution
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-16)
-- Scope:
-  - contract scope
-  - function scope
-  - block scope
-  - shadowing rules
-- Acceptance Criteria:
-  - undefined symbol and duplicate declaration diagnostics
-- Progress Update:
-  - implemented baseline contract/function/block scope symbol resolution
-  - undefined symbol checks active in CLI compile path
-  - duplicate state variable and duplicate parameter diagnostics implemented
-
-### SEM-002: Type checker implementation
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-16)
-- Scope:
-  - primitive types
-  - PQC types
-  - assignment compatibility
-  - call arg type matching
-  - return type enforcement
-- Acceptance Criteria:
-  - comprehensive type mismatch test suite
-- Progress Update:
-  - baseline type inference/checks now active for:
-    - local variable initialization compatibility
-    - assignment compatibility (with parser-lvalue fallback guardrails)
-    - return type compatibility
-    - boolean condition enforcement for `require` / `if` / ternary
-    - numeric bound checks for `for` loops
-  - parser call-argument preservation was hardened so semantic call checks use real arity even when expressions are parser-fallback identifiers
-  - new semantic regression tests added for initializer mismatch, require-condition mismatch, and call-argument type mismatch
-
-### SEM-003: Control-flow semantic checks
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-16)
-- Scope:
-  - guaranteed return analysis
-  - unreachable code warnings/errors
-- Acceptance Criteria:
-  - compile-time errors for missing returns in non-void functions
-- Progress Update:
-  - return-value arity enforcement implemented (void vs non-void return rules)
-  - flow-sensitive non-void path analysis implemented:
-    - compile-time error when a non-void function may reach end-of-body without returning on all paths
-    - compile-time unreachable-statement diagnostics after terminal control-flow (`return` / `revert` or fully terminal `if/else`)
-  - tuple return expressions are now accepted in expression grammar, so control-flow return-path analysis applies to tuple-returning functions as well
-
-### SEM-004: PQC semantic rules
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-16)
-- Scope:
-  - enforce correct key/signature pairing
-  - enforce algorithm variant compatibility
-- Acceptance Criteria:
-  - invalid pairing rejected at compile time
-- Progress Update:
-  - compiler now enforces built-in PQC signature/call contracts for:
-    - `verifyMLDSASignature` / `verify_mldsa...`
-    - `verifyFNDSASignature` / `verify_fndsa...`
-    - `mlkem...decapsulate`
-    - `hqckem...decapsulate`
-  - de-scoped SLH built-ins are now compile-time rejected in semantic analysis (fail-closed before bytecode generation)
-  - codegen PQC builtin detection now supports camelCase + snake_case aliases through normalized dispatch helpers
-
-### SEM-005: Gas annotation semantic validation
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - annotation schema validation
-  - mandatory annotations policy
-- Acceptance Criteria:
-  - deterministic validation errors with source spans
-
----
-
-## 5.4 Code Generation Workstream
-
-### CG-001: Implement variable addressing and storage model
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-09)
-- Scope:
-  - local variable slots
-  - function frame layout
-- Acceptance Criteria:
-  - assignments/reads behave correctly in integration tests
-
-### CG-002: Implement correct function call lowering
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - function label resolution
-  - argument passing convention
-  - return handling
-- Acceptance Criteria:
-  - nested function call tests pass
-
-### CG-003: Complete expression lowering
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - identifier/member/index semantics
-  - logical operators and short-circuiting
-  - modulo/shift operations
-- Acceptance Criteria:
-  - expression semantics match evaluator test oracle
-
-### CG-004: Implement robust control-flow lowering
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-09)
-- Scope:
-  - branch/loop patching correctness
-  - structured label management
-- Acceptance Criteria:
-  - no invalid jump targets in generated bytecode
-
-### CG-005: Deterministic bytecode generation
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - stable ordering and deterministic build output
-- Acceptance Criteria:
-  - identical source generates byte-identical output
-
-### CG-006: Bytecode metadata section
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - source map/debug metadata
-  - contract ABI metadata
-- Acceptance Criteria:
-  - metadata consumed by trace/debug tooling
-
----
-
-## 5.5 VM Runtime Workstream
-
-### VM-001: Formalize call/return contract execution model
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - entrypoint conventions
-  - call stack rules
-  - return semantics for top-level execution
-- Acceptance Criteria:
-  - contract entry/exit behavior documented and tested
-
-### VM-002: Harden memory model
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - local memory and persistent storage separation
-  - strict bounds and access checks
-- Acceptance Criteria:
-  - out-of-bounds and invalid access tests
-
-### VM-003: Implement missing opcodes or remove unsupported syntax
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - close parser/codegen/VM opcode support gap
-- Acceptance Criteria:
-  - no parser-accepted construct lowers to unsupported opcode path
-
-### VM-004: Gas accounting conformance harness
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - per-op gas table
-  - PQC gas formulas
-  - deterministic gas tests
-- Acceptance Criteria:
-  - gas snapshots stable across CI runs
-
-### VM-005: VM error taxonomy and diagnostics
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - structured error codes
-  - stack traces / PC tracing
-- Acceptance Criteria:
-  - debug mode output enables reproducible triage
-
-### VM-006: SLH-DSA support decision
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - either implement SLH-DSA runtime support or remove language claims
-- Acceptance Criteria:
-  - docs + runtime behavior are consistent
-
----
-
-## 5.6 PQC Engine Alignment Workstream
-
-### PQC-001: Decide official algorithm support matrix by release tier
-
-- Priority: P0
-- Status: TODO
-- Tiers:
-  - Tier 1 (required for next release)
-  - Tier 2 (experimental)
-- Acceptance Criteria:
-  - published support matrix in docs
-
-### PQC-002: Align `pqsynq` tests with implemented APIs
-
-- Priority: P0
-- Status: DONE (2026-02-09)
-- Scope:
-  - remove or gate tests for non-implemented methods
-  - fix failing `--features full` path
-- Acceptance Criteria:
-  - `cargo test -p aegis-pqsynq --all-features --all-targets` passes
-
-### PQC-003: Add known-answer tests for enabled algorithms
-
-- Priority: P1
-- Status: DONE (2026-02-09)
-- Scope:
-  - ML-KEM/ML-DSA/FN-DSA KAT ingestion and validation
-- Acceptance Criteria:
-  - KAT tests run in CI and pass deterministically
-
-### PQC-004: Side-channel and constant-time audit preparation
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - threat model
-  - audit checklist
-- Acceptance Criteria:
-  - external audit package ready
-
-### PQC-005: Batch verification strategy
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - evaluate need and design for batch verify opcodes
-- Acceptance Criteria:
-  - architecture decision record committed
-
----
-
-## 5.7 CLI and Tooling Workstream
-
-### CLI-001: Rename/standardize binary (`qsc`) and command UX
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - command naming consistency
-  - ergonomic help output
-- Acceptance Criteria:
-  - `qsc --help` reflects official workflow
-
-### CLI-002: Implement `qsc test`
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - contract test execution harness
-- Acceptance Criteria:
-  - sample contracts run with pass/fail summaries
-
-### CLI-003: Implement `qsc deploy`
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - deployment artifact packaging
-  - network/RPC integration points
-- Acceptance Criteria:
-  - can deploy canonical sample contract to target environment
-
-### CLI-004: Implement `qsc estimate` and `qsc trace`
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - static and dynamic gas estimation
-  - execution trace output
-- Acceptance Criteria:
-  - trace includes opcode sequence and gas deltas
-
-### CLI-005: Implement `qsc lint` and `qsc format`
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - formatting/lint rules for SynQ source
-- Acceptance Criteria:
-  - deterministic formatting and lint diagnostics
-
----
-
-## 5.8 SDK Workstream (TypeScript)
-
-### SDK-001: Implement Kyber module functions currently stubbed
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - keypair/encapsulate/decapsulate
-- Acceptance Criteria:
-  - no runtime `Not implemented` in SDK crypto path
-
-### SDK-002: Define package boundaries and build tooling
-
-- Priority: P0
-- Status: IN PROGRESS (2026-02-09)
-- Scope:
-  - package.json/tsconfig/build targets
-  - lint/test pipelines
-- Acceptance Criteria:
-  - SDK installs and builds as standalone package
-
-### SDK-003: Implement transaction signing and verification utilities
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - deterministic tx serialization
-  - signature envelopes
-- Acceptance Criteria:
-  - roundtrip sign/verify tests pass
-
-### SDK-004: Contract interaction abstraction hardening
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - ABI encoding/decoding
-  - typed call wrappers
-- Acceptance Criteria:
-  - generated client can invoke sample contracts end-to-end
-
-### SDK-005: Address format and key encoding policy
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - canonical address encoding (Bech32m or policy-defined alternative)
-- Acceptance Criteria:
-  - validation + conversion helpers with tests
-
-### SDK-006: Browser and Node compatibility matrix
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - polyfills
-  - WebCrypto compatibility
-- Acceptance Criteria:
-  - matrix documented with tested environments
-
----
-
-## 5.9 Smart Contract Fixtures and Acceptance Tests
-
-### SC-001: Populate `smart-contracts/examples` with canonical contracts
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - minimal token
-  - multisig
-  - governance
-  - escrow
-- Acceptance Criteria:
-  - examples compile and execute in automated tests
-
-### SC-002: Populate `smart-contracts/tests` with scenario suites
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - positive/negative behavior tests
-  - gas assertions
-  - failure mode assertions
-- Acceptance Criteria:
-  - CI runs contract scenario suite on each PR
-
-### SC-003: Golden bytecode fixtures
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - expected bytecode snapshots for canonical contracts
-- Acceptance Criteria:
-  - bytecode diff detection prevents silent regressions
-
-### SC-004: PQC-specific behavior scenarios
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - valid/invalid signatures
-  - key mismatch
-  - malformed payloads
-- Acceptance Criteria:
-  - clear pass/fail matrix for all supported algorithms
-
----
-
-## 5.10 Documentation and Spec Reconciliation
-
-### DOC-001: Create implementation truth table (spec vs code)
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - every language feature and opcode mapped to implemented status
-- Acceptance Criteria:
-  - table checked into docs and reviewed at each milestone
-
-### DOC-002: Correct VM opcode/spec mismatches
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - opcode values, names, stack effects, gas notes
-- Acceptance Criteria:
-  - docs reflect exact implementation or clearly mark planned items
-
-### DOC-003: Correct language spec feature claims
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - remove unsupported claims or mark as roadmap
-- Acceptance Criteria:
-  - no feature listed as available unless tests prove it
-
-### DOC-004: Publish a “Getting Started (Real)” guide
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - exact working commands for current supported flow
-- Acceptance Criteria:
-  - fresh environment validation passes by following guide verbatim
-
-### DOC-005: Add developer migration guide and pitfalls
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - Solidity-to-SynQ mapping
-- Acceptance Criteria:
-  - examples cover common mistakes and equivalent patterns
-
----
-
-## 5.11 QA, CI, and Release Engineering
-
-### QA-001: Expand CI matrix
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - default + all-targets + feature permutations
-- Acceptance Criteria:
-  - CI fails on any unsupported/rotting feature path
-
-### QA-002: Enforce lint and formatting gates
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - `cargo fmt --check`
-  - `cargo clippy -D warnings`
-- Acceptance Criteria:
-  - no warning debt in release branch
-
-### QA-003: Add coverage metrics and quality thresholds
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - per-crate coverage report
-- Acceptance Criteria:
-  - threshold policy enforced in CI
-
-### QA-004: Regression test pack for release candidates
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - compiler + VM + CLI + SDK smoke + contract suites
-- Acceptance Criteria:
-  - one-command RC validation pipeline
-
-### QA-005: Performance baseline and drift monitoring
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - benchmark snapshots
-- Acceptance Criteria:
-  - alert on significant perf regressions
-
----
-
-## 5.12 Security and Reliability
-
-### SEC-001: Threat model for SynQ contract lifecycle
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - compile-time, runtime, cryptographic, tooling attack surfaces
-- Acceptance Criteria:
-  - threat model doc approved and referenced by backlog tasks
-
-### SEC-002: VM safety hardening checklist
-
-- Priority: P0
-- Status: TODO
-- Scope:
-  - stack bounds
-  - memory bounds
-  - malformed bytecode handling
-- Acceptance Criteria:
-  - dedicated adversarial test suite passes
-
-### SEC-003: Reproducible build strategy
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - toolchain pinning
-  - deterministic artifacts
-- Acceptance Criteria:
-  - build reproducibility verified across environments
-
-### SEC-004: External audit readiness package
-
-- Priority: P1
-- Status: TODO
-- Scope:
-  - architecture docs
-  - known limitations
-  - test evidence
-- Acceptance Criteria:
-  - package is complete and internally reviewed
-
-### SEC-005: Incident response and rollback plan
-
-- Priority: P2
-- Status: TODO
-- Scope:
-  - severity matrix
-  - response runbooks
-- Acceptance Criteria:
-  - tabletop simulation completed
-
----
-
-## 6. Priority Roadmap (Suggested Critical Path)
-
-## Milestone M0: “Truth and Stability” (Immediate)
-
-Objective: stop drift and establish reliable baseline.
-
-- Complete:
-  - DOC-001, DOC-002, DOC-003
-  - LANG-001 (annotation parsing) baseline
-  - PQC-002 (`--features full` decision/fix)
-  - QA-001 and QA-002
-- Exit Criteria:
-  - docs and code are aligned on supported features
-  - CI catches unsupported permutations
-
-## Milestone M1: “Compiler and VM Functional Core”
-
-Objective: reliable compilation/execution of non-trivial contracts.
-
-- Complete:
-  - LANG-002, LANG-003
-  - SEM-001, SEM-002, SEM-003
-  - CG-001, CG-002, CG-003, CG-004
-  - VM-001, VM-002, VM-003
-- Exit Criteria:
-  - canonical contracts compile and execute with expected results
-
-## Milestone M2: “Developer Workflow Usability”
-
-Objective: contract developers can build/test/run without internal knowledge.
-
-- Complete:
-  - CLI-001, CLI-002, CLI-003
-  - SDK-001, SDK-002, SDK-003
-  - SC-001, SC-002
-  - DOC-004
-- Exit Criteria:
-  - clean-room developer can follow docs and complete end-to-end flow
-
-## Milestone M3: “Production Candidate”
-
-Objective: release hardening, security posture, quality controls.
-
-- Complete:
-  - VM-004, VM-005
-  - PQC-003, PQC-004
-  - QA-003, QA-004
-  - SEC-001, SEC-002, SEC-004
-- Exit Criteria:
-  - release checklist signed off with quantified risk acceptance
-
----
-
-## 7. Immediate Next 10 Execution Tasks (Recommended Sprint Start)
-
-1. Finalize support matrix (enabled algorithms and feature flags) and publish it.
-2. Build contract-level HQC fixtures that validate parser/codegen/VM end-to-end, now that opcode/intrinsic wiring is in place. (Completed 2026-02-09)
-3. Implement annotation parsing end-to-end with tests. (Completed 2026-02-09)
-4. Implement function body statement parsing with AST tests. (In progress: parser now supports executable body statements + `for` loop lowering tests.)
-5. Implement semantic symbol table and type checks for assignment/calls/returns.
-   - In progress: baseline symbol/type/PQC semantic gates are active in CLI compile path; deeper flow analysis and variant-level PQC enforcement remain open.
-6. Build variable slot model and deterministic function call lowering in codegen. (In progress: variable storage/load + loop slot updates landed; function-call lowering remains open.)
-7. Add contract fixture suite in `smart-contracts/examples` and `smart-contracts/tests`. (Completed 2026-02-09)
-8. Implement CLI `qsc test` baseline runner.
-9. Replace SDK Kyber stubs and add SDK test harness. (In progress: SDK test harness is done; Kyber crypto implementation is still stubbed.)
-10. Publish doc reconciliation update so external messaging matches actual functionality. (Completed 2026-02-09)
-
----
-
-## 8. Progress Tracking Template (Use for Weekly Updates)
-
-Use this block for each weekly update in this file or a separate status log.
-
-```markdown
-### Week of YYYY-MM-DD
-
-- Overall Health: Green | Yellow | Red
-- Completed:
-  - [ ] <Task IDs>
-- In Progress:
-  - [ ] <Task IDs>
-- Blocked:
-  - [ ] <Task IDs + blocker>
-- Scope Changes:
-  - <approved change requests>
-- Risks Added:
-  - <new risks>
-- Risks Closed:
-  - <closed risks>
-- Evidence:
-  - <test runs, benchmark reports, docs links>
-```
-
----
-
-## 9. Non-Negotiable Quality Gates for “SynQ Ready” Claim
-
-Do not claim SynQ is “fully completed” until all gates below are true:
-
-- Compiler parses and semantically validates real-world contracts reliably.
-- Bytecode generation is deterministic and semantically correct for supported language features.
-- VM executes supported constructs with validated gas accounting.
-- PQC support matrix is explicit, tested, and documented.
-- CLI and SDK provide practical end-to-end developer workflow.
-- Smart contract fixtures and regression suites are operational in CI.
-- Documentation is synchronized with implementation and test evidence.
-
-If these gates are not met, the accurate status is: **“in active buildout, not production-complete.”**
+- [ ] **VM-005: Implement ABI decoder/encoder.**
+  - VM must accept call data and emit return data/logs using the SynQ ABI.
+  - Acceptance: Rust and SDK ABI tests agree byte-for-byte.
+
+- [ ] **VM-006: Finalize gas model.**
+  - Base gas, memory/storage gas, PQC gas, block/tx limits, refunds if any, and failure semantics.
+  - Acceptance: gas estimates match VM execution within documented bounds.
+
+- [ ] **VM-007: Wire real PQC precompiles.**
+  - ML-DSA, FN-DSA, ML-KEM, HQC-KEM, and explicitly de-scoped algorithms.
+  - Acceptance: AIVM executes real contract-level PQC success/failure fixtures through the SynQ runtime path.
+
+- [ ] **VM-008: Define bytecode/artifact versioning.**
+  - Magic, version, sections, metadata hash, ABI hash, source hash, and compatibility rules.
+  - Acceptance: old/incompatible artifacts fail with clear errors.
+
+## P0: Synergy TESTNET Integration
+
+- [ ] **NET-001: Verify active Synergy TESTNET RPC contract surface.**
+  - Identify the actual RPC Gateway and node/runtime methods for AIVM deploy, call, estimate, block, receipt, and source verification.
+  - Acceptance: recorded live RPC method matrix with example request/response payloads.
+
+- [ ] **NET-002: Define SynQ transaction payloads for TESTNET.**
+  - Compile artifact payload, AIVM artifact envelope, constructor args, call data, gas, nonce, signer, chain ID, and receipts.
+  - Acceptance: transaction spec implemented in Rust CLI and TypeScript SDK.
+
+- [ ] **NET-003: Implement first live deploy path.**
+  - Choose minimal canonical contract.
+  - Compile, package, submit to RPC Gateway, wait for receipt, and verify stored bytecode/source hash.
+  - Acceptance: one SynQ contract is deployed and called on Synergy TESTNET.
+
+- [ ] **NET-004: Add TESTNET-safe configuration.**
+  - No hardcoded production secrets.
+  - Explicit network selection.
+  - Chain/network IDs verified from live runtime before defaults are committed.
+  - Acceptance: CLI and SDK can target TESTNET predictably.
+
+- [ ] **NET-005: Add node/runtime compatibility tests.**
+  - Validate artifact version, AIVM gas limits, RPC payload size, block inclusion, and failure receipts against the live TESTNET runtime.
+  - Acceptance: compatibility suite can be run before each TESTNET release.
+
+## P1: CLI
+
+- [ ] **CLI-001: Produce complete build artifacts.**
+  - Bytecode, ABI, AIVM artifact envelope, metadata, source hash, compiler version, backend profile, gas estimate, and optional Solidity artifact.
+  - Acceptance: `qsc compile` writes deterministic artifact directory that AIVM can load directly.
+
+- [ ] **CLI-002: Implement `qsc test`.**
+  - Run contract scenario fixtures with pass/fail summaries.
+  - Acceptance: examples and negative tests run from one command.
+
+- [ ] **CLI-003: Implement `qsc deploy`.**
+  - Network config, account/signer input, gas, nonce, artifact upload, receipt wait, and source hash verification.
+  - Acceptance: deploys canonical SynQ/AIVM artifact to TESTNET.
+
+- [ ] **CLI-004: Implement `qsc estimate`.**
+  - Local VM estimate and optional remote RPC estimate.
+  - Acceptance: estimates are comparable to actual execution gas.
+
+- [ ] **CLI-005: Implement `qsc trace`.**
+  - Instruction trace, stack/memory/state diffs, gas usage, and PQC operation outcomes.
+  - Acceptance: failing contract tests produce actionable traces.
+
+- [ ] **CLI-006: Implement source/bytecode verification.**
+  - Local deterministic verification already exists; extend it to artifact metadata and remote deployed contracts.
+  - Acceptance: remote deployed source verification works.
+
+## P1: SDK
+
+- [x] **SDK-001: Add TypeScript compile gate.**
+  - Done in this session.
+
+- [x] **SDK-002: Add tested RPC error handling.**
+  - Done in this session.
+
+- [x] **SDK-003: Make unsupported PQC key APIs fail explicitly.**
+  - Done in this session.
+
+- [ ] **SDK-004: Implement real PQC key provider.**
+  - Wire ML-DSA/FN-DSA/ML-KEM/HQC through a real backend, not placeholders.
+  - Acceptance: SDK can generate keys, sign/verify, encapsulate/decapsulate, and match Rust vectors.
+
+- [ ] **SDK-005: Implement transaction signing.**
+  - SynQ/Synergy transaction format, chain ID, nonce, gas, payload hash, and PQC signature.
+  - Acceptance: SDK-signed transaction is accepted by TESTNET RPC.
+
+- [ ] **SDK-006: Generate contract clients from ABI.**
+  - Type-safe deploy/call wrappers, event decoding, receipt parsing.
+  - Acceptance: generated client can deploy and call canonical contract.
+
+- [ ] **SDK-007: Add wallet integration surface.**
+  - Define how wallet-held keys sign SynQ deployments and calls.
+  - Acceptance: wallet and SDK produce identical transaction payloads.
+
+## P1: Examples And Contract Test Suite
+
+- [ ] **SC-001: Define canonical minimum TESTNET contract.**
+  - Small enough for first live deploy, but includes state, call, event, and one PQC-gated path.
+  - Acceptance: this contract is the first TESTNET deployment target.
+
+- [ ] **SC-002: Turn documented examples into executable scenarios.**
+  - Token, multisig, DAO, NFT, escrow, staking.
+  - Acceptance: each example has compile, deploy, call, state assertion, and failure scenario.
+
+- [ ] **SC-003: Add negative security fixtures.**
+  - Bad signatures, wrong domains, wrong keys, replayed messages, bad gas, unsupported algorithms, malformed ABI.
+  - Acceptance: each failure has an expected deterministic error.
+
+- [ ] **SC-004: Add bytecode snapshots.**
+  - Deterministic outputs for canonical contracts.
+  - Acceptance: compiler changes cannot alter bytecode silently.
+
+## P1: Security And Audit
+
+- [ ] **SEC-001: Refresh threat model against implemented runtime.**
+  - Include compiler, AIVM runtime, SynQ bytecode executor, CLI, SDK, TESTNET RPC, key lifecycle, source verification, AI execution, transcript verification, and deployment workflow.
+  - Acceptance: threat model matches current code.
+
+- [ ] **SEC-002: Enforce domain separation.**
+  - All signatures must include contract, function, chain/network, nonce, and intent domain.
+  - Acceptance: replay-style negative fixtures fail.
+
+- [ ] **SEC-003: Add fuzzing.**
+  - Parser fuzzing, bytecode loader fuzzing, ABI decoder fuzzing, VM execution fuzzing.
+  - Acceptance: fuzz targets run in CI/nightly profile.
+
+- [ ] **SEC-004: Add secret handling policy and tests.**
+  - No private key logging, deterministic redaction, zeroization where applicable.
+  - Acceptance: SDK/CLI logs cannot expose key material.
+
+- [ ] **SEC-005: Independent audit readiness package.**
+  - Spec, architecture, threat model, examples, vectors, known limitations, and reproducible test commands.
+  - Acceptance: external reviewer can reproduce all evidence.
+
+## P2: Docs, Release, And Governance
+
+- [ ] **DOC-001: Remove unsupported behavior from public docs.**
+  - Current README mentions commands and features that are not fully implemented.
+  - Acceptance: docs distinguish implemented, experimental, and planned behavior.
+
+- [ ] **DOC-002: Write TESTNET deployment guide.**
+  - Install, compile, configure network, deploy, call, verify, troubleshoot.
+  - Acceptance: guide works against live TESTNET.
+
+- [ ] **DOC-003: Write language reference from implemented grammar.**
+  - No aspirational syntax in the v1 reference.
+  - Acceptance: every example in the reference is tested.
+
+- [ ] **REL-001: Version compiler, ABI, bytecode, and SDK together.**
+  - Acceptance: release artifacts include compatibility matrix.
+
+- [ ] **REL-002: Package CLI and SDK.**
+  - CLI install path, npm package or internal package, reproducible checksums.
+  - Acceptance: clean machine can install and run tests.
+
+- [ ] **REL-003: Add release gate.**
+  - Default tests, PQC backend tests, SDK compile/tests, examples, docs link check, security fixtures, TESTNET smoke.
+  - Acceptance: release cannot ship without all required gates.
+
+## Immediate Next Execution Order
+
+1. Decide whether AIVM embeds `quantumvm` as the SynQ executor or replaces it with native AIVM SynQ execution.
+2. Freeze the SynQ/AIVM artifact envelope and ABI/call-data schema.
+3. Implement AIVM deploy/call/state/account lifecycle for the minimal canonical contract.
+4. Pick the minimal canonical TESTNET contract.
+5. Implement CLI artifact packaging, deploy, test, estimate, and trace around AIVM receipts.
+6. Wire SDK signing, ABI clients, and deploy/call support.
+7. Verify active TESTNET RPC/node AIVM methods and run one live SynQ deployment plus receipt check.
+8. Add CI profiles for default, PQC strict, AIVM integration, SDK, and TESTNET smoke gates.
+9. Expand examples, negative tests, security gates, and docs until all completion criteria are satisfied.

@@ -406,7 +406,7 @@ impl CodeGenerator {
                 }
 
                 // Handle PQC function calls using integration
-                use crate::pqc_integration::PqcIntegration;
+                use crate::pqc_integration::{KemAlgorithm, PqcIntegration};
                 if PqcIntegration::is_pqc_function(name) {
                     if PqcIntegration::is_mldsa_verify_function(name) {
                         self.assembler.emit_op(OpCode::MLDSAVerify);
@@ -418,13 +418,13 @@ impl CodeGenerator {
                         || PqcIntegration::is_hqckem_family_function(name)
                     {
                         match PqcIntegration::get_kem_algorithm(name) {
-                            Some(pqsynq::KemAlgorithm::Hqckem128) => {
+                            Some(KemAlgorithm::Hqckem128) => {
                                 self.assembler.emit_op(OpCode::HQCKEM128KeyExchange);
                             }
-                            Some(pqsynq::KemAlgorithm::Hqckem192) => {
+                            Some(KemAlgorithm::Hqckem192) => {
                                 self.assembler.emit_op(OpCode::HQCKEM192KeyExchange);
                             }
-                            Some(pqsynq::KemAlgorithm::Hqckem256) => {
+                            Some(KemAlgorithm::Hqckem256) => {
                                 self.assembler.emit_op(OpCode::HQCKEM256KeyExchange);
                             }
                             _ => {
