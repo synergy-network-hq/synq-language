@@ -490,12 +490,7 @@ pub fn verify_detached_signature(
     #[cfg(all(enable_x86_avx2, feature = "avx2"))]
     {
         if std::is_x86_feature_detected!("avx2") {
-            return verify_detached_sig!(
-                PQCLEAN_MLDSA44_AVX2_crypto_sign_verify_ctx,
-                sig,
-                msg,
-                pk
-            );
+            return verify_detached_sig!(PQCLEAN_MLDSA44_AVX2_crypto_sign_verify_ctx, sig, msg, pk);
         }
     }
     #[cfg(all(enable_aarch64_neon, feature = "neon"))]
