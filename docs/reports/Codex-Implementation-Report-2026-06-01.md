@@ -26,14 +26,14 @@ Model B ownership boundary:
 - `/Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core/src/metering.rs`
 - `/Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core/src/execution.rs`
 - `/Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core/examples/counter_state_demo.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
 
 ## Verification
 
 Environment:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
@@ -81,7 +81,7 @@ cargo test --manifest-path .../aegis-pqvm/Cargo.toml --test integrations_dispatc
 ## Git Status
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta:
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet:
 ## main...origin/main
  M src/synq_admission.rs
 

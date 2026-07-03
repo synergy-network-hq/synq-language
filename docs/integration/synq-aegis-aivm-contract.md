@@ -57,7 +57,7 @@ rejected at the SynQ admission boundary.
 ## Testnet-Beta SynQ Carrier
 
 The current source-backed carrier is
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`.
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`.
 It uses prefix `synq-admission-v1:` and a JSON-encoded
 `SynQAdmissionEnvelope` with:
 

@@ -43,7 +43,7 @@ buildable changes:
 Environment:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
@@ -98,7 +98,7 @@ only for source-backed items.
 ## Git Status
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta:
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet:
 ## main...origin/main
 
 /Volumes/xcode/Synergy-Network-Projects/project-rosetta:

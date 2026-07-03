@@ -240,11 +240,11 @@ for cases proven by current commands.
 
 The correction to inspect `/Users/devpup/Desktop/Testnet-Beta` was completed.
 The active node/RPC/runtime source is
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`.
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`.
 
 New source-backed artifact:
 
-- `/Volumes/xcode/Synergy-Network-Projects/synq-language/docs/integration/testnet-beta-source-inventory-2026-05-26.md`
+- `/Volumes/xcode/Synergy-Network-Projects/synq-language/docs/integration/testnet-source-inventory-2026-05-26.md`
 
 New or updated Rosetta files:
 
@@ -268,7 +268,7 @@ New spec/register/proof updates:
 ### TESTNET Findings
 
 - Chain constants are source-backed in
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs`:
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs`:
   `chain_id = 1264`, `network_id = "synergy-testnet-v2"`.
 - The current local RPC surface is `synergy_*`, not the future `synq_*` surface.
 - Current receipt methods are `synergy_getReceipt`,
@@ -341,7 +341,7 @@ Left partial or blocked with notes:
  M docs/synergy-testnet-integration.md
 ```
 
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`:
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`:
 
 ```text
 ## main...origin/main
@@ -399,22 +399,22 @@ transaction/DAG/VM admission owner.
 - Standalone pqsynq mirror:
   `/Volumes/xcode/Synergy-Network-Projects/aegis-pqsynq/aegis-pqsynq/pqsynq/Cargo.toml`
 - Active pqvm manifest:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml`
 - Active node dependency:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml`
   contains `aegis-pqvm = { path = "../aegis-pqvm" }`.
 - Active node pqvm wrapper:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/crypto/aegis_pqvm.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/crypto/aegis_pqvm.rs`
 - Aegis transaction carrier/admission:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
 - DAG admission:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/dag_mempool.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/dag_mempool.rs`
 - Chain transaction validation:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/transaction.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/transaction.rs`
 - Deterministic receipts/roots:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs`
 - RPC handlers and disabled AIVM handlers:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs`
 
 ### Implemented
 
@@ -443,7 +443,7 @@ Passed:
 
 - `cargo fmt --all --check` in `/Volumes/xcode/Synergy-Network-Projects/synq-language`
 - `cargo test -p aegis-pqsynq --test synq_verifier_tests --locked`: 17 passed.
-- `cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked`: 6 + 15 + 3 tests passed.
+- `cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked`: 6 + 15 + 3 tests passed.
 
 Blocked:
 
@@ -468,7 +468,7 @@ Blocked:
  M docs/synergy-testnet-integration.md
 ```
 
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`:
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`:
 
 ```text
 ## main...origin/main
@@ -515,14 +515,14 @@ blockchain/DAG/PQVM admission owner and keeps SynQ language policy in
 
 Testnet-Beta:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/lib.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/src/utils.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/Cargo.lock`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/lib.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/src/utils.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/Cargo.lock`
 
 Documentation:
 
@@ -535,7 +535,7 @@ Documentation:
 
 ### Adapter
 
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
 defines:
 
 - `SynQAdmissionEnvelope`
@@ -600,11 +600,11 @@ The internal execution path now has:
 Passed:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target cargo fmt --all --check
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target cargo fmt --all --check
 ```
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 ```
 
 Result: 10 passed. Covered network aliases, malformed carrier,
@@ -612,13 +612,13 @@ wrong-chain/wrong-domain/invalid-signature errors, valid deploy/call pqsynq
 verification, and pqsynq-before-pqvm outer admission.
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
 ```
 
 Result: 1 passed.
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
 ```
 
 Result: 17 passed.
@@ -633,14 +633,14 @@ CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integrati
 Failed while building RocksDB with `errno=28` in the requested target directory.
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet synq_admission::tests -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet synq_admission::tests -- --nocapture
 ```
 
 Compiled the node library but failed while linking a node binary with `errno=28`.
 The `--lib` form passed.
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Failed before tests with undefined `_PQRUST_RUST_randombytes` after unifying
@@ -653,7 +653,7 @@ Final disk state during this addendum:
 
 ```text
 /Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration  2.6G
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target      8.6G
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target      8.6G
 /System/Volumes/Data available                                      116Mi
 ```
 
@@ -690,7 +690,7 @@ retest after the approved cache deletion.
 
 ### Current Git Status
 
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`:
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`:
 
 ```text
  M Cargo.lock
@@ -743,7 +743,7 @@ Deleted only the approved integration-attempt build cache:
 ```
 
 No source files, docs, repos, keys, configs, user data, or
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target` were deleted.
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target` were deleted.
 
 Post-cleanup disk check:
 
@@ -757,14 +757,14 @@ Post-cleanup disk check:
 Environment:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
 Passed:
 
 ```sh
-cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Result: 6 + 15 + 3 tests passed. This validates the
@@ -835,19 +835,19 @@ Approved cleanup completed:
 - Deleted only `/Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration`
   after confirming it was the 2.6G integration-attempt build cache.
 - Did not delete
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target`.
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target`.
 - Did not delete source files, docs, repos, keys, configs, or user data.
 
 Required reruns with:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
 Results:
 
-- `cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked`: PASS; 6 integration dispatch tests, 3 security smoke tests, and 15 VM validation tests passed. This validates the `_PQRUST_RUST_randombytes` compatibility shim in `aegis-pqvm/src/utils.rs`.
+- `cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked`: PASS; 6 integration dispatch tests, 3 security smoke tests, and 15 VM validation tests passed. This validates the `_PQRUST_RUST_randombytes` compatibility shim in `aegis-pqvm/src/utils.rs`.
 - `cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture`: PASS; 10 tests passed, including deploy/call pqsynq verification and deploy/call pqsynq-before-pqvm admission.
 - `cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture`: PASS; 1 test passed.
 - `cargo test -p aegis-pqsynq --test synq_verifier_tests --locked`: PASS from `/Volumes/xcode/Synergy-Network-Projects/synq-language`; 17 verifier tests passed.
@@ -882,7 +882,7 @@ Remaining legitimate blockers:
 Final git status sweep:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta:
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet:
 ## main...origin/main [behind 4]
  M Cargo.lock
  M aegis-pqvm/Cargo.toml

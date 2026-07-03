@@ -30,16 +30,16 @@ Neither module should replace the other.
 
 Implementation evidence:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml`
   now depends on `aegis-pqsynq` through the `pqsynq` crate name.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
   defines `SynQAdmissionEnvelope`, `SynQAdmissionKind`,
   `SynQVerificationSummary`, `SynQAdmissionError`, network normalization, and
   deploy/call verification adapters.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
   calls `verify_transaction_payload_for_chain_admission` before the existing
   `AegisPqvmVerifier` outer transaction admission path.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs`
   preserves optional SynQ verification summaries and structured error codes in
   execution state and transaction receipts.
 - `cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture`
@@ -65,14 +65,14 @@ not wrap `aegis-pqvm`, and it does not own node/DAG admission.
 
 | Kind | Path | Evidence |
 |---|---|---|
-| Active Testnet-Beta node dependency | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml` | Node crate `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml` depends on `aegis-pqvm = { path = "../aegis-pqvm" }`. |
-| Node wrapper | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/crypto/aegis_pqvm.rs` | Defines Synergy domain tags, key registry/lifecycle, signer, verifier, and checked transaction/vote/QC verification helpers. |
-| Typed Aegis transaction tool | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs` | Builds and verifies `AegisTxSubmissionEnvelope`, maps it into the legacy RPC transaction carrier, and tests wrong-chain/tamper rejection. |
-| DAG mempool admission | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/dag_mempool.rs` | `DagMempool::admit_transaction` verifies stateless canonical bytes and `AegisPqvmVerifier` signatures before DAG insertion. |
-| Legacy/RPC transaction validation | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/transaction.rs` | `validate_for_admission` enforces chain/network and either Aegis carrier or embedded PQC signature verification. |
-| Deterministic execution receipts | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs` | Defines `TransactionReceipt`, `ExecutionResult`, state roots, receipt roots, and authorization-context checks. |
-| RPC handlers | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs` | Exposes `synergy_sendTransaction`, `synergy_submitAegisTransaction`, `synergy_submitAegisDagTransaction`, `synergy_getTransactionReceipt`, `synergy_getReceipt`, `synergy_call`, and `synergy_estimateGas`; AIVM RPC handlers are commented out. |
-| Vendored copy | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/vendor/aegis-pqvm/Cargo.toml` | Vendored support copy used for pqcrypto internals/traits paths. |
+| Active Testnet-Beta node dependency | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml` | Node crate `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml` depends on `aegis-pqvm = { path = "../aegis-pqvm" }`. |
+| Node wrapper | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/crypto/aegis_pqvm.rs` | Defines Synergy domain tags, key registry/lifecycle, signer, verifier, and checked transaction/vote/QC verification helpers. |
+| Typed Aegis transaction tool | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs` | Builds and verifies `AegisTxSubmissionEnvelope`, maps it into the legacy RPC transaction carrier, and tests wrong-chain/tamper rejection. |
+| DAG mempool admission | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/dag_mempool.rs` | `DagMempool::admit_transaction` verifies stateless canonical bytes and `AegisPqvmVerifier` signatures before DAG insertion. |
+| Legacy/RPC transaction validation | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/transaction.rs` | `validate_for_admission` enforces chain/network and either Aegis carrier or embedded PQC signature verification. |
+| Deterministic execution receipts | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs` | Defines `TransactionReceipt`, `ExecutionResult`, state roots, receipt roots, and authorization-context checks. |
+| RPC handlers | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs` | Exposes `synergy_sendTransaction`, `synergy_submitAegisTransaction`, `synergy_submitAegisDagTransaction`, `synergy_getTransactionReceipt`, `synergy_getReceipt`, `synergy_call`, and `synergy_estimateGas`; AIVM RPC handlers are commented out. |
+| Vendored copy | `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/vendor/aegis-pqvm/Cargo.toml` | Vendored support copy used for pqcrypto internals/traits paths. |
 | Standalone workspace copy | `/Volumes/xcode/Synergy-Network-Projects/aegis-pqvm/Cargo.toml` | Adjacent standalone copy with similar PQVM crate contents. |
 
 `aegis-pqvm` remains the active blockchain-focused post-quantum module in the
@@ -91,7 +91,7 @@ Public surface from `pqsynq/src/lib.rs` and submodules:
   `verify_contract_call`, `derive_synq_address`,
   `canonicalize_signing_payload`, `validate_algorithm_policy`,
   `verify_chain_domain`.
-- Policy: `SynQSecurityPolicy`, `testnet_1264_policy`, `devnet_policy`,
+- Policy: `SynQSecurityPolicy`, `testnet_1264_policy`, `testnet_policy`,
   `mainnet_candidate_policy`, `strict_policy`.
 - Domains and chain binding: `ChainId`, `NetworkId`, `DomainTag`,
   `SYNERGY_TESTNET_CHAIN_ID = 1264`, `SYNERGY_TESTNET_NETWORK =

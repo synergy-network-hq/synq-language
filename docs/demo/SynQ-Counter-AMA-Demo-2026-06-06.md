@@ -25,14 +25,14 @@ execution/receipts.
 - Local SynQ workspace:
   `/Volumes/xcode/Synergy-Network-Projects/synq-language`
 - Local Testnet-Beta workspace:
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 - Local AIVM core crate:
   `/Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core`
 - Rust/Cargo installed.
 - Build cache must stay off `/Volumes/xcode`:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 

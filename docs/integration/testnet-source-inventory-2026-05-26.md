@@ -11,8 +11,8 @@ that the SynQ deploy/call flow is end-to-end complete.
 
 Git roots found under `/Users/devpup/Desktop/Testnet-Beta`:
 
-- `synergy-testnet-beta`
-- `synergy-testnet-beta/node-control-panel`
+- `synergy-testnet`
+- `synergy-testnet/node-control-panel`
 - `synq-language`
 - `explorer-app`
 - `synergy-prism`
@@ -25,11 +25,11 @@ Git roots found under `/Users/devpup/Desktop/Testnet-Beta`:
 - `synergy-forge`
 
 The active node/runtime/RPC implementation inspected here is
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`.
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`.
 
 ## Chain 1264 Constants
 
-Source: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs`
+Source: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs`
 
 - `SYNERGY_TESTNET_V2_CHAIN_ID = 1264`
 - `SYNERGY_TESTNET_V2_NETWORK_ID = "synergy-testnet-v2"`
@@ -46,7 +46,7 @@ Additional chain-1264 references exist in:
 
 ## RPC Method Matrix
 
-Source: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs`
+Source: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs`
 
 The live local implementation exposes a `synergy_*` JSON-RPC surface, not the
 future `synq_*` surface from the SynQ chain-1264 spec.
@@ -95,10 +95,10 @@ by `rpc_method_exposure`.
 
 Sources:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/transaction.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/transaction.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs`
 
 Legacy RPC transaction fields:
 
@@ -247,13 +247,13 @@ deploy/call path.
 The earlier `NET-003` through `NET-006` partial conclusion was superseded by
 the implemented node adapter:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
   defines the `synq-admission-v1:` carrier, chain-1264-only network alias
   normalization, pqsynq deploy/call verification, structured error
   preservation, and verification summaries.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
   invokes SynQ verification before the existing pqvm outer admission path.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs`
   carries internal `synq_verification`, `synq_error_code`, and
   `synq_error_message` receipt fields.
 - `src/synq_admission.rs::tests::counter_artifacts_pass_pqsynq_then_existing_pqvm_admission`

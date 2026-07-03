@@ -1,8 +1,8 @@
 Environment check: PASS
 synq_language_root=/Volumes/xcode/Synergy-Network-Projects/synq-language
-testnet_root=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta
+testnet_root=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet
 aivm_core_root=/Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core
-cargo_target_dir=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+cargo_target_dir=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 cargo_build_jobs=2
 
 [1/9] Build deterministic Counter artifacts

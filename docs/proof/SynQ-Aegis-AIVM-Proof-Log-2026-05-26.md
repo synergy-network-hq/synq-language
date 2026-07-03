@@ -165,22 +165,22 @@ Result: PASS.
 
 Changed source paths:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml`
   added a path dependency on active SynQ workspace `aegis-pqsynq` as `pqsynq`.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml`
   now shares the SynQ workspace `pqrust-internals` and `pqrust-traits` paths so
   `aegis-pqvm` and `aegis-pqsynq` use one `pqrust_internals` native link target.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/src/utils.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/src/utils.rs`
   was updated for the shared pqrust RNG symbol name
   `pqrust_RUST_randombytes`.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
   defines `SynQAdmissionEnvelope`, `SynQAdmissionKind`,
   `SynQVerificationSummary`, `SynQAdmissionError`, chain-1264 network alias
   normalization, and deploy/call pqsynq verification adapters.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs`
   calls `verify_transaction_payload_for_chain_admission` before existing
   `AegisPqvmVerifier` outer transaction admission.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs`
   carries optional SynQ verification summaries and structured error codes in
   execution state and receipts.
 
@@ -190,7 +190,7 @@ Command:
 CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration CARGO_BUILD_JOBS=4 cargo test -p synergy-testnet synq_admission::tests -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: FAIL before tests because `/Users` ran out of space while building
 RocksDB into the requested target directory.
@@ -213,7 +213,7 @@ df -h /Users/devpup/Desktop/Testnet-Beta /Users/devpup/Desktop/Testnet-Beta/.car
 du -sh /Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration
 2.6G
 
-du -sh /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+du -sh /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 7.3G
 
 du -sh /Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration/debug/build/librocksdb-sys-490d2293a6b777c6
@@ -223,10 +223,10 @@ du -sh /Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration/debug/b
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet synq_admission::tests -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet synq_admission::tests -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: FAIL after compiling the library because binary linking ran out of
 space.
@@ -234,7 +234,7 @@ space.
 Output excerpt:
 
 ```text
-Compiling synergy-testnet v1.2.0 (/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src)
+Compiling synergy-testnet v1.2.0 (/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src)
 ld: write() failed, errno=28 (No space left on device)
 error: could not compile `synergy-testnet` (bin "synergy-node") due to 1 previous error
 ```
@@ -242,10 +242,10 @@ error: could not compile `synergy-testnet` (bin "synergy-node") due to 1 previou
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS.
 
@@ -269,10 +269,10 @@ test result: ok. 10 passed; 0 failed; 0 ignored; 432 filtered out
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS.
 
@@ -287,7 +287,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 441 filtered out
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
 ```
 
 Workdir: `/Volumes/xcode/Synergy-Network-Projects/synq-language`
@@ -298,24 +298,24 @@ node build attempts.
 Output excerpt:
 
 ```text
-error: failed to build archive at `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target/debug/deps/liblibc-4bcd655ccfb5170a.rlib`: No space left on device (os error 28)
-error: failed to write to `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target/debug/deps/rmetahYrjvo/full.rmeta`: No space left on device (os error 28)
+error: failed to build archive at `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target/debug/deps/liblibc-4bcd655ccfb5170a.rlib`: No space left on device (os error 28)
+error: failed to write to `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target/debug/deps/rmetahYrjvo/full.rmeta`: No space left on device (os error 28)
 ```
 
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target cargo fmt --all --check
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target cargo fmt --all --check
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: FAIL: rustfmt reported formatting diffs in touched files.
 
 Follow-up command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target cargo fmt --all
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target cargo fmt --all
 ```
 
 Result: FAIL because `/Users` had no writable space for rustfmt temp/output
@@ -325,24 +325,24 @@ Output excerpt:
 
 ```text
 cannot create temp file for here document: No space left on device
-Error writing files: io error: /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs: No space left on device (os error 28)
+Error writing files: io error: /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs: No space left on device (os error 28)
 ```
 
 Later retry after transient build files were released:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target cargo fmt --all
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target cargo fmt --all --check
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target cargo fmt --all
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target cargo fmt --all --check
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS, exit code 0 for both commands.
 
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p aegis-pqsynq --test synq_verifier_tests --locked
 ```
 
 Workdir: `/Volumes/xcode/Synergy-Network-Projects/synq-language`
@@ -376,7 +376,7 @@ test result: ok. 17 passed
 Command:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Result: FAIL before tests with an undefined RNG compatibility symbol after
@@ -395,7 +395,7 @@ error: could not compile `aegis-pqvm` (test "vm_validation") due to 1 previous e
 
 Fix added:
 
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/src/utils.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/src/utils.rs`
   now exports `PQRUST_RUST_randombytes` as a compatibility shim that delegates to
   `pqrust_internals::pqrust_RUST_randombytes`.
 
@@ -403,7 +403,7 @@ Final node retest attempt after narrowing the pqsynq dependency to launch-scope
 features `["std", "mldsa"]`:
 
 ```sh
-CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
+CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target CARGO_BUILD_JOBS=2 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 ```
 
 Result: FAIL before tests because `/Users` was exhausted again while writing the
@@ -412,7 +412,7 @@ incremental pqsynq query cache.
 Output excerpt:
 
 ```text
-error: failed to write query cache to `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target/debug/incremental/pqsynq-0148guwpdpj37/s-hiw7ukqcfh-1d56yyj-working/query-cache.bin`: No space left on device (os error 28)
+error: failed to write query cache to `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target/debug/incremental/pqsynq-0148guwpdpj37/s-hiw7ukqcfh-1d56yyj-working/query-cache.bin`: No space left on device (os error 28)
 ```
 
 Current disk evidence:
@@ -425,7 +425,7 @@ df -h /Users/devpup/Desktop/Testnet-Beta /Volumes/xcode
 du -sh /Users/devpup/Desktop/Testnet-Beta/.cargo-target-synq-integration
 2.6G
 
-du -sh /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+du -sh /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 8.6G
 ```
 
@@ -451,14 +451,14 @@ Output excerpt:
 Environment used for final verification:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
 Command:
 
 ```sh
-cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Result: PASS.
@@ -485,7 +485,7 @@ test result: ok. 15 passed
 ```
 
 The `PQRUST_RUST_randombytes` compatibility shim in
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/src/utils.rs`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/src/utils.rs`
 is validated by this pass.
 
 Command:
@@ -494,7 +494,7 @@ Command:
 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS.
 
@@ -521,7 +521,7 @@ Command:
 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS.
 
@@ -561,7 +561,7 @@ Command:
 cargo fmt --all --check
 ```
 
-Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+Workdir: `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Result: PASS, exit code 0.
 
@@ -600,16 +600,16 @@ Output excerpt:
 Command:
 
 ```sh
-find /Users/devpup/Desktop/Testnet-Beta -path '*/target' -prune -o -name Cargo.toml -print | rg 'aegis-pqvm|pqvm|synergy-testnet-beta'
+find /Users/devpup/Desktop/Testnet-Beta -path '*/target' -prune -o -name Cargo.toml -print | rg 'aegis-pqvm|pqvm|synergy-testnet'
 ```
 
 Output excerpt:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/Cargo.toml
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/vendor/aegis-pqvm/Cargo.toml
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/Cargo.toml
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/vendor/aegis-pqvm/Cargo.toml
 /Users/devpup/Desktop/Testnet-Beta/synergy-address-engine/aegis-pqvm/Cargo.toml
 ```
 
@@ -633,8 +633,8 @@ Command:
 
 ```sh
 rg -n "aegis-pqvm|aegis-pqsynq|pqsynq|\[dependencies\]" \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/Cargo.toml \
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml \
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/Cargo.toml \
   /Volumes/xcode/Synergy-Network-Projects/synq-language/Cargo.toml \
   /Volumes/xcode/Synergy-Network-Projects/synq-language/aegis-pqsynq/pqsynq/Cargo.toml
 ```
@@ -645,7 +645,7 @@ Output excerpt:
 /Volumes/xcode/Synergy-Network-Projects/synq-language/aegis-pqsynq/pqsynq/Cargo.toml:2:name = "aegis-pqsynq"
 /Volumes/xcode/Synergy-Network-Projects/synq-language/aegis-pqsynq/pqsynq/Cargo.toml:11:name = "pqsynq"
 /Volumes/xcode/Synergy-Network-Projects/synq-language/Cargo.toml:8:    "aegis-pqsynq/pqsynq",
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml:33:aegis-pqvm = { path = "../aegis-pqvm" }
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml:33:aegis-pqvm = { path = "../aegis-pqvm" }
 ```
 
 Command:
@@ -682,11 +682,11 @@ AEGIS-DOMAIN, AEGIS-CANON, AEGIS-KEY, AEGIS-SIG, and AEGIS-ADDRESS.
 Command:
 
 ```sh
-sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/crypto/aegis_pqvm.rs
-sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs
-sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/transaction.rs
-sed -n '1,260p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/dag_mempool.rs
-sed -n '1,300p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/execution.rs
+sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/crypto/aegis_pqvm.rs
+sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs
+sed -n '1,620p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/transaction.rs
+sed -n '1,260p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/dag_mempool.rs
+sed -n '1,300p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/execution.rs
 ```
 
 Source evidence summary:
@@ -711,23 +711,23 @@ Command:
 
 ```sh
 rg -n "SYNERGY_TESTNET_V2|require_testnet_v2|synergy_testnet_v2|CHAIN_ID|NETWORK_ID" \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src -g '*.rs'
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs \
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src -g '*.rs'
 ```
 
 Output excerpt:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs:6:pub const SYNERGY_TESTNET_V2_CHAIN_ID: u64 = 1264;
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs:7:pub const SYNERGY_TESTNET_V2_NETWORK_ID: &str = "synergy-testnet-v2";
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs:6:pub const SYNERGY_TESTNET_V2_CHAIN_ID: u64 = 1264;
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs:7:pub const SYNERGY_TESTNET_V2_NETWORK_ID: &str = "synergy-testnet-v2";
 ```
 
 Command:
 
 ```sh
 rg -n "AIVM|synq_|deploy|call|sendTransaction|submitAegis|Receipt|receipt|estimateGas|estimatePq|verifyPayload|getSecurityPolicy|Contract" \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs \
-  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src -g '*.rs'
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs \
+  /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src -g '*.rs'
 ```
 
 Output excerpt:
@@ -745,7 +745,7 @@ src/rpc/rpc_server.rs:3184:        "synergy_getReceipt" => transaction_receipt_j
 Command:
 
 ```sh
-sed -n '150,270p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq/compiler.rs
+sed -n '150,270p' /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq/compiler.rs
 ```
 
 Source evidence summary:
@@ -805,7 +805,7 @@ test result: ok. 17 passed; 0 failed
 Command:
 
 ```sh
-TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-pqvm-audit cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-pqvm-audit cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Output excerpt:
@@ -878,7 +878,7 @@ Output excerpt for `/Volumes/xcode/Synergy-Network-Projects/project-rosetta`:
  M docs/synergy-testnet-integration.md
 ```
 
-Output excerpt for `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`:
+Output excerpt for `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`:
 
 ```text
 ## main...origin/main
@@ -903,7 +903,7 @@ Source root inspected:
 Implementation source of truth inspected:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet
 ```
 
 Directory inventory:
@@ -912,8 +912,8 @@ Directory inventory:
 Git roots found under /Users/devpup/Desktop/Testnet-Beta:
 synergy-prism
 synergy-horizon
-synergy-testnet-beta/node-control-panel
-synergy-testnet-beta
+synergy-testnet/node-control-panel
+synergy-testnet
 synergy-address-engine
 synergy-learn
 explorer-app
@@ -927,13 +927,13 @@ synq-language
 Chain constants discovered:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs
 pub const SYNERGY_TESTNET_V2_CHAIN_ID: u64 = 1264;
 pub const SYNERGY_TESTNET_V2_NETWORK_ID: &str = "synergy-testnet-v2";
 ```
 
 RPC methods discovered from
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs`:
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs`:
 
 ```text
 Public read examples:
@@ -975,10 +975,10 @@ synergy_registerSynID
 Transaction envelope sources:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/transaction.rs
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aegis_tx_tool.rs
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synergy_types.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/transaction.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aegis_tx_tool.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synergy_types.rs
 ```
 
 Receipt shapes discovered:
@@ -1014,10 +1014,10 @@ TX_POOL queue -> optional P2P broadcast
 AIVM status discovered:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/aivm/runtime.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/aivm/runtime.rs
 defines AIVMExecutionContext, AIVMExecutionResult, AIVMContract, and AIVMRuntime.
 
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/rpc/rpc_server.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/rpc/rpc_server.rs
 contains synergy_deployAIVMContract and synergy_executeAIVMContract handlers
 commented out as TEMPORARILY DISABLED.
 ```
@@ -1025,7 +1025,7 @@ commented out as TEMPORARILY DISABLED.
 Artifact created:
 
 ```text
-/Volumes/xcode/Synergy-Network-Projects/synq-language/docs/integration/testnet-beta-source-inventory-2026-05-26.md
+/Volumes/xcode/Synergy-Network-Projects/synq-language/docs/integration/testnet-source-inventory-2026-05-26.md
 ```
 
 ## Project Rosetta Real Synergy Receipt Mapping
@@ -1126,11 +1126,11 @@ Result: PASS.
 Command:
 
 ```sh
-TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-beta-exec cargo test -p synergy-testnet execution::tests -- --nocapture
+TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-exec cargo test -p synergy-testnet execution::tests -- --nocapture
 ```
 
 Workdir:
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Output excerpt:
 
@@ -1145,11 +1145,11 @@ test result: ok. 3 passed; 0 failed
 Command:
 
 ```sh
-TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-beta-exec cargo test -p synergy-testnet launch_ -- --nocapture
+TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-exec cargo test -p synergy-testnet launch_ -- --nocapture
 ```
 
 Workdir:
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Output excerpt:
 
@@ -1164,11 +1164,11 @@ test result: ok. 9 passed; 0 failed
 Command:
 
 ```sh
-TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-beta-exec cargo test -p synergy-testnet aegis_tx_tool::tests -- --nocapture
+TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-exec cargo test -p synergy-testnet aegis_tx_tool::tests -- --nocapture
 ```
 
 Workdir:
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Output excerpt:
 
@@ -1184,11 +1184,11 @@ test result: ok. 4 passed; 0 failed
 Command:
 
 ```sh
-TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-beta-exec cargo test -p synergy-testnet transaction::tests::admission_requires_testnet_context_and_real_pqc_signature -- --nocapture
+TMPDIR=/Volumes/xcode/tmp CARGO_TARGET_DIR=/Volumes/xcode/cargo-target-testnet-exec cargo test -p synergy-testnet transaction::tests::admission_requires_testnet_context_and_real_pqc_signature -- --nocapture
 ```
 
 Workdir:
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta`
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet`
 
 Output excerpt:
 
@@ -1666,20 +1666,20 @@ deleted approved cache
 ```
 
 Only the approved integration-attempt build cache was removed. The shared
-`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target` directory and
+`/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target` directory and
 source/docs/repos/configs/keys/user data were not deleted.
 
 Environment used for the required reruns:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
 Command:
 
 ```sh
-cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Output excerpt:
@@ -1791,7 +1791,7 @@ Items deliberately left open:
 Final git status commands:
 
 ```sh
-git -C /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta status --short --branch
+git -C /Users/devpup/Desktop/Testnet-Beta/synergy-testnet status --short --branch
 git -C /Volumes/xcode/Synergy-Network-Projects/project-rosetta status --short --branch
 git -C /Volumes/xcode/Synergy-Network-Projects/synq-language status --short --branch
 git -C /Volumes/xcode/Synergy-Network-Projects/aegis-pqsynq status --short --branch
@@ -1801,7 +1801,7 @@ git -C /Volumes/xcode/Synergy-Network-Projects/synergy-aivm status --short --bra
 Output excerpts:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta:
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet:
 ## main...origin/main [behind 4]
  M Cargo.lock
  M aegis-pqvm/Cargo.toml
@@ -1839,7 +1839,7 @@ fatal: not a git repository at that exact path
 Environment used for Rust verification:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
@@ -2004,7 +2004,7 @@ Left partial/unchecked:
 Final git status sweep:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta:
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet:
 ## main...origin/main
 
 /Volumes/xcode/Synergy-Network-Projects/project-rosetta:
@@ -2025,7 +2025,7 @@ fatal: not a git repository at that exact path
 Environment:
 
 ```sh
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 ```
 
@@ -2111,7 +2111,7 @@ Commands:
 
 ```sh
 cd /Volumes/xcode/Synergy-Network-Projects/synq-language
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 cargo test -p cli --test integration_test --locked
 cargo test -p compiler --test artifact_test --locked
@@ -2183,7 +2183,7 @@ Commands:
 
 ```sh
 cd /Volumes/xcode/Synergy-Network-Projects/synq-language
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 cargo test -p compiler --test artifact_test --locked
 cargo test -p cli --test integration_test --locked
@@ -2230,7 +2230,7 @@ Commands:
 
 ```sh
 cd /Volumes/xcode/Synergy-Network-Projects/synq-language
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 cargo test -p cli --test integration_test --locked
 cargo test -p compiler --test artifact_test --locked
@@ -2283,7 +2283,7 @@ Command:
 
 ```sh
 cd /Volumes/xcode/Synergy-Network-Projects/synergy-aivm/runtime/aivm-core
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 cargo fmt --check
 cargo test --lib --locked
@@ -2327,7 +2327,7 @@ cd /Volumes/xcode/Synergy-Network-Projects/synq-language
 File:
 
 ```text
-/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs
+/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs
 ```
 
 Commands:
@@ -2336,7 +2336,7 @@ Commands:
 bash /Volumes/xcode/Synergy-Network-Projects/synq-language/scripts/ama_demo_synq_counter.sh
 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 cargo test -p synergy-testnet --lib execution::tests::receipt_preserves_synq_verification_summary -- --nocapture
-cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Result: PASS.
@@ -2398,7 +2398,7 @@ Result: PASS, `14/14`.
 Testnet-Beta:
 
 ```sh
-cd /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta
+cd /Users/devpup/Desktop/Testnet-Beta/synergy-testnet
 cargo fmt --all --check
 cargo test -p synergy-testnet --lib synq_admission::tests -- --nocapture
 cargo test -p synergy-testnet --lib execution::tests -- --nocapture
@@ -2416,7 +2416,7 @@ artifact-linked Counter admission: 1/1
 `aegis-pqvm`:
 
 ```sh
-cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
+cargo test --manifest-path /Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm/Cargo.toml --test integrations_dispatch --test vm_validation --test security_smoke --locked
 ```
 
 Result: PASS, `24/24`.

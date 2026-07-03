@@ -30,7 +30,7 @@ to public TESTNET.
 
 ```sh
 cd /Volumes/xcode/Synergy-Network-Projects/synq-language
-export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/target
+export CARGO_TARGET_DIR=/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/target
 export CARGO_BUILD_JOBS=2
 cargo test -p cli --test integration_test --locked
 cargo test -p compiler --test artifact_test --locked

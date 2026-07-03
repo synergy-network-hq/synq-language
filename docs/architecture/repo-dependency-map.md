@@ -67,12 +67,12 @@ Rosetta intent + scope digest + replay domain
   `pqrust` crates. It does not wrap `aegis-pqvm`, and it should not own
   blockchain transaction admission.
 - Testnet-Beta node source at
-  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/Cargo.toml`
-  depends on `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/aegis-pqvm`
+  `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/Cargo.toml`
+  depends on `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/aegis-pqvm`
   for the active blockchain/PQVM admission path.
 - Testnet-Beta node source now also depends on the active SynQ workspace
   `aegis-pqsynq` crate as `pqsynq` for inner SynQ deploy/call admission.
-- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet-beta/src/synq_admission.rs`
+- `/Users/devpup/Desktop/Testnet-Beta/synergy-testnet/src/synq_admission.rs`
   defines the Model B node boundary: `SynQAdmissionEnvelope`,
   `SynQAdmissionKind`, `SynQVerificationSummary`,
   `verify_synq_deploy_for_chain_admission`, and
