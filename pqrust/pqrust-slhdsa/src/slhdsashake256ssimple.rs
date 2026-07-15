@@ -6,8 +6,8 @@ use serde_big_array::BigArray;
 
 use crate::ffi;
 use alloc::vec::Vec;
-use pqcrypto_traits::sign as primitive;
-use pqcrypto_traits::{Error, Result};
+use pqrust_traits::sign as primitive;
+use pqrust_traits::{Error, Result};
 
 macro_rules! simple_struct {
     ($type: ident, $size: expr) => {
@@ -26,8 +26,8 @@ macro_rules! simple_struct {
 
         impl primitive::$type for $type {
 
-    pqrust#[inline]
-    pqrustfn as_bytes(&self) -> &[u8] {
+    #[inline]
+    fn as_bytes(&self) -> &[u8] {
                 &self.0
             }
 

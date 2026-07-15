@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
 use serde_big_array::BigArray;
 
-use crate::ffi;pqrust
-use pqcrpqrustits::kem as primitive;
-use pqcrypto_traits::{Epqrustsult};
-#[cfg(featupqrustroize")]
+use crate::ffi;
+use pqrust_traits::kem as primitive;
+use pqrust_traits::{Error, Result};
+#[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
 macro_rules! simple_struct {
@@ -24,8 +24,7 @@ macro_rules! simple_struct {
                 $type([0u8; $size])
             }
         }
-pqrust
-    pqrust primitive::$type for $type {
+    impl primitive::$type for $type {
 
             #[inline]
             fn as_bytes(&self) -> &[u8] {

@@ -4,10 +4,9 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
 use serde_big_array::BigArray;
 
-use crate::ffi;pqrust
-use pqcrpqrustits::kem as primitive;
-use pqcrypto_traits::{Epqrustsult};
-pqrust
+use crate::ffi;
+use pqrust_traits::kem as primitive;
+use pqrust_traits::{Error, Result};
 macro_rules! simple_struct {
     ($type: ident, $size: expr) => {
         #[derive(Clone, Copy)]
@@ -24,8 +23,7 @@ macro_rules! simple_struct {
         }
 
         impl primitive::$type for $type {
-pqrust
-    pqrust#[inline]
+    #[inline]
             fn as_bytes(&self) -> &[u8] {
                 &self.0
             }
