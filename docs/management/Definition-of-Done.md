@@ -1,8 +1,8 @@
 # SynQ Definition of Done (DoD)
 
-> Canonical status note (2026-05-26): this DoD remains policy guidance. The
-> current proof-backed task register is
-> `../SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+> This DoD is policy guidance, not an implementation-status source. AIVM
+> execution tasks live in
+> `../../../synergy-aivm/docs/readiness/SMART_CONTRACT_PRODUCTION_READINESS.md`.
 
 ## Purpose
 
@@ -16,7 +16,7 @@ A task is done only if all are true:
 2. Tests exist for behavior changed or added.
 3. Relevant docs are updated in the same change window.
 4. Validation commands pass locally.
-5. No known blocker is hidden; open blockers are logged in backlog/risk register.
+5. No known blocker is hidden; open blockers are recorded in the owning project's readiness checklist.
 
 ## Workstream-Specific DoD
 

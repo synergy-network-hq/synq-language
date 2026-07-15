@@ -1,8 +1,8 @@
 # SynQ Security Audit Manual
 
-> Canonical status note (2026-05-26): this manual remains useful security
-> process documentation, but it is not the current implementation checklist.
-> Current task status lives in `SynQ-Aegis-AIVM-Canonical-Tasks.md`.
+> This manual is security process documentation, not an implementation-status
+> source. AIVM execution tasks live in
+> `../../synergy-aivm/docs/readiness/SMART_CONTRACT_PRODUCTION_READINESS.md`.
 
 Version: 1.0
 Last Updated: 2026-02-09
