@@ -1,21 +1,33 @@
 //! Deterministic SynQ ABI and manifest artifact generation.
 
 use crate::ast::{
-    Block, ContractDefinition, ContractPart, EventDefinition, FunctionDefinition, SourceUnit,
-    Statement, Type,
+    Block, ContractDefinition, ContractPart, EventDefinition, Expression, FunctionDefinition,
+    SourceUnit, Statement, Type,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 pub const SYNQ_ABI_VERSION: &str = "0.1";
-pub const SYNQ_ARTIFACT_FORMAT: &str = "synq-bytecode-v1";
-pub const SYNQ_BYTECODE_VERSION: u16 = 1;
+pub const SYNQ_ARTIFACT_FORMAT: &str = "synq-stateful-ir-v2";
+pub const SYNQ_BYTECODE_VERSION: u16 = 2;
 pub const SYNQ_MANIFEST_VERSION: &str = "0.1";
 pub const SYNQ_REQUIRED_AIVM_VERSION: &str = "0.1";
-pub const SYNQ_TESTNET_CHAIN_ID: u64 = 1264;
+pub const SYNQ_TESTNET_CHAIN_ID: u64 = 1266;
 pub const SYNQ_TESTNET_NETWORK_ID: &str = "synergy-testnet";
-pub const SYNQ_TESTNET_SIGNATURE_ALGORITHM: &str = "ML-DSA-65";
-pub const SYNQ_TESTNET_SECURITY_POLICY: &str = "synq-testnet-1264-v1";
+/// The algorithm that must sign the **account-domain** envelope authorizing a
+/// deploy or call of this contract — i.e. the deployer's or caller's signature.
+///
+/// It is emitted as `required_signature_algorithm` in the manifest and as
+/// `security_requirements.signature_algorithm` in the ABI, and
+/// `synq_admission` binds the incoming envelope's algorithm to it.
+///
+/// This is **not**: the validator consensus algorithm (ML-DSA-65), the
+/// FN-DSA-1024 Synergy identity/address key, an SXCP relayer attestation key
+/// (FN-DSA-1024), the Ed25519 P2P node identity, or the ML-KEM-1024 ETDAG
+/// ingress key. It was ML-DSA-65 until 2026-07-27, which put the consensus
+/// algorithm in the account domain.
+pub const SYNQ_TESTNET_SIGNATURE_ALGORITHM: &str = "ML-DSA-87";
+pub const SYNQ_TESTNET_SECURITY_POLICY: &str = "synq-testnet-1266-v1";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArtifactConfig {
@@ -28,7 +40,7 @@ pub struct ArtifactConfig {
 }
 
 impl ArtifactConfig {
-    pub fn testnet_1264() -> Self {
+    pub fn testnet_1266() -> Self {
         Self {
             bytecode_version: SYNQ_BYTECODE_VERSION,
             required_aivm_version: SYNQ_REQUIRED_AIVM_VERSION.to_string(),
@@ -132,7 +144,7 @@ pub struct ArtifactBundle {
 
 impl ArtifactBundle {
     pub fn generate(source: &str, ast: &[SourceUnit], bytecode: Vec<u8>) -> Result<Self, String> {
-        Self::generate_with_config(source, ast, bytecode, &ArtifactConfig::testnet_1264())
+        Self::generate_with_config(source, ast, bytecode, &ArtifactConfig::testnet_1266())
     }
 
     pub fn generate_with_config(
@@ -160,7 +172,7 @@ impl ArtifactBundle {
             bytecode_version: config.bytecode_version,
             compiler_version: env!("CARGO_PKG_VERSION").to_string(),
             contract_name: contract.name.clone(),
-            host_functions: Vec::new(),
+            host_functions: collect_host_functions(contract),
             manifest_version: SYNQ_MANIFEST_VERSION.to_string(),
             permissions: Vec::new(),
             required_aivm_version: config.required_aivm_version.clone(),
@@ -243,9 +255,129 @@ fn build_abi(contract: &ContractDefinition) -> SynQAbiArtifact {
         security_requirements: SynQSecurityRequirements {
             call_domain: "SYNQ_CONTRACT_CALL_V1".to_string(),
             deploy_domain: "SYNQ_CONTRACT_DEPLOY_V1".to_string(),
-            signature_algorithm: "ML-DSA-65".to_string(),
+            // Same constant as the manifest: one spelling, one source, so the
+            // ABI and the manifest can never disagree about the domain.
+            signature_algorithm: SYNQ_TESTNET_SIGNATURE_ALGORITHM.to_string(),
         },
         state_schema,
+    }
+}
+
+fn collect_host_functions(contract: &ContractDefinition) -> Vec<String> {
+    const HOST_FUNCTIONS: &[&str] = &[
+        "callContract",
+        "registryIsActiveValidator",
+        "registryIsKnownValidator",
+        "registryJailValidator",
+        "registryReduceSelfStake",
+        "registryTombstoneValidator",
+        "registryValidatorSelfStake",
+        "sendNative",
+        "stakingSlashSelfStake",
+        "stakingTotalVotingPower",
+        "stakingVotingPower",
+        "synidNameHash",
+        "synidNormalize",
+        "verifyGovernanceAuthorization",
+        "verifyMLDSASignature",
+    ];
+
+    let mut found = std::collections::BTreeSet::new();
+    for part in &contract.parts {
+        match part {
+            ContractPart::Constructor(constructor) => {
+                collect_host_functions_from_block(&constructor.body, &mut found)
+            }
+            ContractPart::Function(function) => {
+                collect_host_functions_from_block(&function.body, &mut found)
+            }
+            _ => {}
+        }
+    }
+    found
+        .into_iter()
+        .filter(|name| HOST_FUNCTIONS.contains(&name.as_str()))
+        .collect()
+}
+
+fn collect_host_functions_from_block(
+    block: &Block,
+    found: &mut std::collections::BTreeSet<String>,
+) {
+    for statement in &block.statements {
+        match statement {
+            Statement::Expression(expression)
+            | Statement::Assignment(_, expression)
+            | Statement::Require(expression, _) => {
+                collect_host_functions_from_expression(expression, found)
+            }
+            Statement::VariableDeclaration(_, _, initializer) => {
+                if let Some(expression) = initializer {
+                    collect_host_functions_from_expression(expression, found);
+                }
+            }
+            Statement::Return(expression) => {
+                if let Some(expression) = expression {
+                    collect_host_functions_from_expression(expression, found);
+                }
+            }
+            Statement::If(condition, then_block, else_block) => {
+                collect_host_functions_from_expression(condition, found);
+                collect_host_functions_from_block(then_block, found);
+                if let Some(else_block) = else_block {
+                    collect_host_functions_from_block(else_block, found);
+                }
+            }
+            Statement::For(_, start, end, body) => {
+                collect_host_functions_from_expression(start, found);
+                collect_host_functions_from_expression(end, found);
+                collect_host_functions_from_block(body, found);
+            }
+            Statement::Emit(_, args) => {
+                for arg in args {
+                    collect_host_functions_from_expression(arg, found);
+                }
+            }
+            Statement::RequirePqc(block, fallback) => {
+                collect_host_functions_from_block(block, found);
+                if let Some(fallback) = fallback {
+                    collect_host_functions_from_block(
+                        &Block {
+                            statements: vec![(**fallback).clone()],
+                        },
+                        found,
+                    );
+                }
+            }
+            Statement::Revert(_) => {}
+        }
+    }
+}
+
+fn collect_host_functions_from_expression(
+    expression: &Expression,
+    found: &mut std::collections::BTreeSet<String>,
+) {
+    match expression {
+        Expression::Call(name, args) => {
+            found.insert(name.clone());
+            for arg in args {
+                collect_host_functions_from_expression(arg, found);
+            }
+        }
+        Expression::MemberAccess(object, _) | Expression::Unary(_, object) => {
+            collect_host_functions_from_expression(object, found)
+        }
+        Expression::IndexAccess(object, index) | Expression::Binary(_, object, index) => {
+            collect_host_functions_from_expression(object, found);
+            collect_host_functions_from_expression(index, found);
+        }
+        Expression::Ternary(condition, then_expression, else_expression) => {
+            collect_host_functions_from_expression(condition, found);
+            collect_host_functions_from_expression(then_expression, found);
+            collect_host_functions_from_expression(else_expression, found);
+        }
+        Expression::Literal(_) | Expression::Identifier(_) => {}
     }
 }
 

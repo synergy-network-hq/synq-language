@@ -39,16 +39,16 @@ version = "0.1.0"
 
 [compiler]
 language_version = "0.1"
-bytecode_version = 1
+bytecode_version = 2
 target_aivm_version = "0.1"
 
 [network]
-chain_id = 1264
+chain_id = 1266
 network_id = "{network_id}"
 address_hrp = "tsynq"
 
 [security]
-signature_algorithm = "ML-DSA-65"
+signature_algorithm = "ML-DSA-87"
 deploy_domain = "SYNQ_CONTRACT_DEPLOY_V1"
 call_domain = "SYNQ_CONTRACT_CALL_V1"
 "#
@@ -78,7 +78,7 @@ fn signed_call_project() -> SignedCallProject {
     keygen_cmd.arg("keygen").arg("--out-dir").arg(&key_dir);
     keygen_cmd.assert().success();
 
-    let private_key_path = key_dir.join("synq-testnet-mldsa65.private.json");
+    let private_key_path = key_dir.join("synq-testnet-mldsa87.private.json");
     let private_key_json: serde_json::Value =
         serde_json::from_slice(&fs::read(&private_key_path).unwrap()).unwrap();
     let contract_address = private_key_json["address"].as_str().unwrap();
@@ -319,9 +319,9 @@ fn test_compile_counter_example() {
     let manifest: serde_json::Value =
         serde_json::from_slice(&fs::read(source_path.with_extension("manifest.json")).unwrap())
             .unwrap();
-    assert_eq!(manifest["required_chain_id"], 1264);
+    assert_eq!(manifest["required_chain_id"], 1266);
     assert_eq!(manifest["required_network_id"], "synergy-testnet");
-    assert_eq!(manifest["required_signature_algorithm"], "ML-DSA-65");
+    assert_eq!(manifest["required_signature_algorithm"], "ML-DSA-87");
 }
 
 #[test]
@@ -350,9 +350,9 @@ fn test_check_abi_manifest_and_simulate_counter() {
     manifest_cmd
         .assert()
         .success()
-        .stdout(predicate::str::contains(r#""required_chain_id":1264"#))
+        .stdout(predicate::str::contains(r#""required_chain_id":1266"#))
         .stdout(predicate::str::contains(
-            r#""required_signature_algorithm":"ML-DSA-65""#,
+            r#""required_signature_algorithm":"ML-DSA-87""#,
         ));
 
     let mut simulate_source = NamedTempFile::new().unwrap();
@@ -472,9 +472,24 @@ fn test_build_consumes_synq_toml_network_alias() {
 }
 
 #[test]
+fn test_build_accepts_testnet_v3_network_alias() {
+    let dir = tempdir().unwrap();
+    let source_path = write_counter_project(dir.path(), &valid_synq_toml("synergy-testnet-v3"));
+
+    let mut build_cmd = Command::new(assert_cmd::cargo::cargo_bin!("cli"));
+    build_cmd.arg("build").arg(&source_path);
+    build_cmd.assert().success();
+
+    let manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(source_path.with_extension("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["required_network_id"], "synergy-testnet-v3");
+}
+
+#[test]
 fn test_build_rejects_unsupported_synq_toml_chain() {
     let dir = tempdir().unwrap();
-    let config = valid_synq_toml("synergy-testnet").replace("chain_id = 1264", "chain_id = 999");
+    let config = valid_synq_toml("synergy-testnet").replace("chain_id = 1266", "chain_id = 999");
     let source_path = write_counter_project(dir.path(), &config);
 
     let mut build_cmd = Command::new(assert_cmd::cargo::cargo_bin!("cli"));
@@ -489,8 +504,8 @@ fn test_build_rejects_unsupported_synq_toml_chain() {
 fn test_build_rejects_unsupported_synq_toml_signature_algorithm() {
     let dir = tempdir().unwrap();
     let config = valid_synq_toml("synergy-testnet").replace(
-        "signature_algorithm = \"ML-DSA-65\"",
         "signature_algorithm = \"ML-DSA-87\"",
+        "signature_algorithm = \"ML-DSA-65\"",
     );
     let source_path = write_counter_project(dir.path(), &config);
 
@@ -524,7 +539,7 @@ fn test_keygen_sign_deploy_and_verify_deploy_use_pqsynq() {
         .current_dir(&project_path)
         .arg("keygen")
         .arg("--algorithm")
-        .arg("ml-dsa-65")
+        .arg("ml-dsa-87")
         .arg("--network")
         .arg("testnet")
         .arg("--out-dir")
@@ -533,15 +548,15 @@ fn test_keygen_sign_deploy_and_verify_deploy_use_pqsynq() {
         .assert()
         .success()
         .stdout(predicate::str::contains(
-            "Generated ML-DSA-65 SynQ identity",
+            "Generated ML-DSA-87 SynQ account identity",
         ))
         .stdout(predicate::str::contains("network_id=synergy-testnet"))
         .get_output()
         .stdout
         .clone();
 
-    let private_key_path = key_dir.join("synq-testnet-mldsa65.private.json");
-    let public_key_path = key_dir.join("synq-testnet-mldsa65.public.json");
+    let private_key_path = key_dir.join("synq-testnet-mldsa87.private.json");
+    let public_key_path = key_dir.join("synq-testnet-mldsa87.public.json");
     assert!(private_key_path.exists());
     assert!(public_key_path.exists());
     let private_key_json: serde_json::Value =
@@ -565,6 +580,8 @@ fn test_keygen_sign_deploy_and_verify_deploy_use_pqsynq() {
         .arg(&private_key_path)
         .arg("--output")
         .arg(&envelope_path)
+        .arg("--args")
+        .arg(r#"[{"initial":1}]"#)
         .arg("--nonce")
         .arg("42");
     sign_cmd
@@ -572,13 +589,17 @@ fn test_keygen_sign_deploy_and_verify_deploy_use_pqsynq() {
         .success()
         .stdout(predicate::str::contains("Signed SynQ deploy envelope"))
         .stdout(predicate::str::contains("domain=SYNQ_CONTRACT_DEPLOY_V1"))
-        .stdout(predicate::str::contains("algorithm=ML-DSA-65"));
+        .stdout(predicate::str::contains("algorithm=ML-DSA-87"));
 
     let envelope: serde_json::Value =
         serde_json::from_slice(&fs::read(&envelope_path).unwrap()).unwrap();
-    assert_eq!(envelope["signing_payload"]["chain_id"], 1264);
+    assert_eq!(envelope["signing_payload"]["chain_id"], 1266);
     assert_eq!(envelope["signing_payload"]["network_id"], "synergy-testnet");
     assert_eq!(envelope["signing_payload"]["nonce"], 42);
+    assert_ne!(
+        envelope["constructor_args_hash"],
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
 
     let mut verify_cmd = Command::new(assert_cmd::cargo::cargo_bin!("cli"));
     verify_cmd.arg("verify-deploy").arg(&envelope_path);
@@ -620,7 +641,7 @@ fn test_keygen_sign_deploy_and_verify_deploy_use_pqsynq() {
 
     let call_envelope: serde_json::Value =
         serde_json::from_slice(&fs::read(&call_envelope_path).unwrap()).unwrap();
-    assert_eq!(call_envelope["signing_payload"]["chain_id"], 1264);
+    assert_eq!(call_envelope["signing_payload"]["chain_id"], 1266);
     assert_eq!(
         call_envelope["signing_payload"]["network_id"],
         "synergy-testnet"
@@ -645,13 +666,15 @@ fn test_keygen_rejects_non_launch_signature_algorithm() {
     keygen_cmd
         .arg("keygen")
         .arg("--algorithm")
-        .arg("ml-dsa-87")
+        .arg("ml-dsa-65")
         .arg("--out-dir")
         .arg(dir.path());
     keygen_cmd
         .assert()
         .failure()
-        .stderr(predicate::str::contains("launch policy requires ML-DSA-65"));
+        .stderr(predicate::str::contains(
+            "account-domain policy requires ML-DSA-87",
+        ));
 }
 
 #[test]
@@ -679,7 +702,7 @@ fn test_verify_deploy_rejects_wrong_chain_before_pqsynq_context() {
         .arg("--abi")
         .arg(source_path.with_extension("abi.json"))
         .arg("--private-key")
-        .arg(key_dir.join("synq-testnet-mldsa65.private.json"))
+        .arg(key_dir.join("synq-testnet-mldsa87.private.json"))
         .arg("--output")
         .arg(&envelope_path);
     sign_cmd.assert().success();
@@ -785,7 +808,7 @@ fn test_sign_call_rejects_missing_method_in_abi() {
     keygen_cmd.assert().success();
 
     let key_json: serde_json::Value = serde_json::from_slice(
-        &fs::read(key_dir.join("synq-testnet-mldsa65.private.json")).unwrap(),
+        &fs::read(key_dir.join("synq-testnet-mldsa87.private.json")).unwrap(),
     )
     .unwrap();
     let mut sign_call_cmd = Command::new(assert_cmd::cargo::cargo_bin!("cli"));
@@ -800,7 +823,7 @@ fn test_sign_call_rejects_missing_method_in_abi() {
         .arg("--manifest")
         .arg(source_path.with_extension("manifest.json"))
         .arg("--private-key")
-        .arg(key_dir.join("synq-testnet-mldsa65.private.json"))
+        .arg(key_dir.join("synq-testnet-mldsa87.private.json"))
         .arg("--output")
         .arg(dir.path().join("missing.call.json"));
     sign_call_cmd
