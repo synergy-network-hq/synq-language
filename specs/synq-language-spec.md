@@ -1,7 +1,7 @@
 # SynQ Language Spec
 
 Spec version: 0.1
-Target network profile: `synergy-testnet`, chain `1264`
+Target network profile: `synergy-testnet`, chain `1266`
 
 ## File And Module Rules
 
@@ -9,7 +9,7 @@ Target network profile: `synergy-testnet`, chain `1264`
 - Source text MUST be UTF-8.
 - A file contains zero or one `module` declaration, zero or more `import`
   declarations, and one or more `contract` declarations.
-- Imports are disabled for chain-1264 deployment until deterministic import
+- Imports are disabled for chain-1266 deployment until deterministic import
   resolution is implemented. A compiler MAY parse imports but MUST reject deploy
   artifacts that depend on unresolved imports.
 

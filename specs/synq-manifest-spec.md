@@ -19,8 +19,8 @@ insignificant whitespace. The manifest hash is
 | `abi_hash` | hex32 | SHA-256 of canonical ABI |
 | `security_policy` | object | see security policy spec |
 | `required_signature_algorithm` | string | launch default `ML-DSA-65` |
-| `required_chain_id` | integer | `1264` for testnet |
-| `required_network_id` | string | `synergy-testnet`; local chain-1264 node admission may also accept the `synergy-testnet-v2` alias after explicit normalization |
+| `required_chain_id` | integer | `1266` for testnet |
+| `required_network_id` | string | `synergy-testnet`; local chain-1266 node admission may also accept the `synergy-testnet-v3` alias after explicit normalization |
 | `required_aivm_version` | string | `0.1` |
 | `permissions` | array | sorted permission names |
 | `host_functions` | array | sorted host ABI names |
@@ -31,9 +31,9 @@ insignificant whitespace. The manifest hash is
 AIVM MUST reject deployment if:
 
 - manifest hash does not match bytecode header
-- chain ID is not `1264` for the testnet profile
+- chain ID is not `1266` for the testnet profile
 - network ID is neither `synergy-testnet` nor an explicitly normalized
-  chain-1264 alias such as `synergy-testnet-v2`
+  chain-1266 alias such as `synergy-testnet-v3`
 - required signature algorithm is not allowed by `aegis-pqsynq`
 - manifest declares host functions not supported by AIVM
 - storage schema hash is missing or malformed

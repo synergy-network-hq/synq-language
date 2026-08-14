@@ -248,7 +248,7 @@ What it does:
 - Validates manifest chain/network/signature policy fields.
 - Creates a `SYNQ_CONTRACT_DEPLOY_V1` signing payload.
 - Signs with ML-DSA-65 through `aegis-pqsynq`.
-- Self-verifies the envelope through `AegisSynQVerifier::testnet_1264()`.
+- Self-verifies the envelope through `AegisSynQVerifier::testnet_1266()`.
 
 This produces a canonical local deploy envelope. It does not submit a
 transaction to public TESTNET.
@@ -280,7 +280,7 @@ What it does:
 - Validates manifest chain/network/signature policy fields.
 - Creates a `SYNQ_CONTRACT_CALL_V1` signing payload.
 - Signs with ML-DSA-65 through `aegis-pqsynq`.
-- Self-verifies the envelope through `AegisSynQVerifier::testnet_1264()`.
+- Self-verifies the envelope through `AegisSynQVerifier::testnet_1266()`.
 - `verify-call` preserves structured `aegis-pqsynq` error codes such as
   `AEGIS-DOMAIN`, `AEGIS-SIG`, and `AEGIS-CANON`.
 
@@ -292,7 +292,7 @@ transaction to public TESTNET and is not the same as a future live
 
 When `check`, `build`, `abi`, `manifest`, `compile`, `simulate`, or `verify`
 receives a source path, the CLI searches from the source directory upward for
-`synq.toml`. If no file exists, the compiler uses the default chain-1264
+`synq.toml`. If no file exists, the compiler uses the default chain-1266
 testnet profile.
 
 When `synq.toml` exists, the CLI validates these sections before artifact
@@ -301,9 +301,9 @@ generation:
 - `[package]`: non-empty `name` and `version`
 - `[compiler]`: `language_version = "0.1"`, `bytecode_version = 1`, and a
   non-empty `target_aivm_version`
-- `[network]`: `chain_id = 1264`, `address_hrp = "tsynq"`, and
-  `network_id = "synergy-testnet"` or the chain-1264 node alias
-  `"synergy-testnet-v2"`
+- `[network]`: `chain_id = 1266`, `address_hrp = "tsynq"`, and
+  `network_id = "synergy-testnet"` or the chain-1266 node alias
+  `"synergy-testnet-v3"`
 - `[security]`: `signature_algorithm = "ML-DSA-65"`,
   `deploy_domain = "SYNQ_CONTRACT_DEPLOY_V1"`, and
   `call_domain = "SYNQ_CONTRACT_CALL_V1"`

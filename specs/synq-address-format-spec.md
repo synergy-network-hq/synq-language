@@ -7,7 +7,7 @@ Spec version: 0.1
 | Size | Field |
 |---:|---|
 | 1 | address version, `0x01` |
-| 2 | network ID, `0x04f0` for chain 1264 |
+| 2 | network ID, `0x04f2` for chain 1266 |
 | 2 | algorithm ID |
 | 32 | public key hash |
 | 4 | checksum |
@@ -31,7 +31,7 @@ and input encoding only.
 ## Test Vector Seed
 
 For public key bytes `0x010203`, algorithm `ML-DSA-65` (`0x0102`), and network
-`1264` (`0x04f0`):
+`1266` (`0x04f2`):
 
 - public key hash:
   `039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81`
