@@ -1,0 +1,20 @@
+{
+ "inventory_source": "/Volumes/xcode/Synergy-Network-Projects/network-components/synq-language",
+ "destination": "/Volumes/xcode/Synergy-Network/05-SynQ/synq-language",
+ "original_volume": "external:xcode",
+ "mode": "MOVE",
+ "kind": "GIT_REPO",
+ "reason": "canonical checkout of synergy-network-hq/synq-language (9 commits, branch agent/tv3-account-domain-source)",
+ "bytes_at_scan": 506331280,
+ "files_at_scan": 18758,
+ "regenerable_bytes_inside": 167551235,
+ "relocated_at": "2026-08-14T04:32:09-05:00",
+ "consolidation_batch": "2026-08-13",
+ "verification": {
+  "files_before": 18803,
+  "files_after": 18803,
+  "bytes_before": 506528136,
+  "bytes_after": 506528136,
+  "match": true
+ }
+}
