@@ -2,7 +2,7 @@
 
 use crate::ast::{
     Block, ContractDefinition, ContractPart, EventDefinition, Expression, FunctionDefinition,
-    SourceUnit, Statement, Type,
+    SourceUnit, Statement, StructDefinition, Type,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -61,6 +61,22 @@ pub struct SynQAbiArtifact {
     pub methods: Vec<SynQAbiMethod>,
     pub security_requirements: SynQSecurityRequirements,
     pub state_schema: Vec<SynQAbiStateField>,
+    /// Struct type definitions referenced by any method/event/state param
+    /// above (by name, e.g. "struct<Point>"). Lets a UI render a proper
+    /// multi-field form for a struct-typed argument instead of a single
+    /// opaque text box. Omitted entirely (not even an empty array) when a
+    /// contract has no structs, so every existing struct-free contract's
+    /// ABI JSON stays byte-for-byte identical to before this field existed
+    /// -- required for the checked-in canonical fixtures and any external
+    /// consumer hashing/signing this exact JSON.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub structs: Vec<SynQAbiStructDef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SynQAbiStructDef {
+    pub name: String,
+    pub fields: Vec<SynQAbiParameter>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -154,7 +170,14 @@ impl ArtifactBundle {
         config: &ArtifactConfig,
     ) -> Result<Self, String> {
         let contract = single_contract(ast)?;
-        let abi = build_abi(contract);
+        let struct_defs: Vec<StructDefinition> = ast
+            .iter()
+            .filter_map(|unit| match unit {
+                SourceUnit::Struct(def) => Some(def.clone()),
+                _ => None,
+            })
+            .collect();
+        let abi = build_abi(contract, &struct_defs);
         let abi_bytes = serde_json::to_vec(&abi)
             .map_err(|error| format!("failed to serialize deterministic ABI JSON: {error}"))?;
         let state_schema_bytes = serde_json::to_vec(&abi.state_schema).map_err(|error| {
@@ -228,7 +251,7 @@ fn single_contract(ast: &[SourceUnit]) -> Result<&ContractDefinition, String> {
     Ok(contract)
 }
 
-fn build_abi(contract: &ContractDefinition) -> SynQAbiArtifact {
+fn build_abi(contract: &ContractDefinition, struct_defs: &[StructDefinition]) -> SynQAbiArtifact {
     let mut events = Vec::new();
     let mut methods = Vec::new();
     let mut state_schema = Vec::new();
@@ -246,6 +269,22 @@ fn build_abi(contract: &ContractDefinition) -> SynQAbiArtifact {
         }
     }
 
+    let structs = struct_defs
+        .iter()
+        .map(|def| SynQAbiStructDef {
+            name: def.name.clone(),
+            fields: def
+                .fields
+                .iter()
+                .map(|field| SynQAbiParameter {
+                    indexed: false,
+                    name: field.name.clone(),
+                    r#type: type_name(&field.ty),
+                })
+                .collect(),
+        })
+        .collect();
+
     SynQAbiArtifact {
         abi_version: SYNQ_ABI_VERSION.to_string(),
         contract: contract.name.clone(),
@@ -260,6 +299,7 @@ fn build_abi(contract: &ContractDefinition) -> SynQAbiArtifact {
             signature_algorithm: SYNQ_TESTNET_SIGNATURE_ALGORITHM.to_string(),
         },
         state_schema,
+        structs,
     }
 }
 
