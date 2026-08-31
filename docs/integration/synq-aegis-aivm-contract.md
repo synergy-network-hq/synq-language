@@ -42,16 +42,16 @@ must not duplicate deploy/call verification policy.
 
 Required launch policy:
 
-- chain ID: `1264`
+- chain ID: `1266`
 - network: `synergy-testnet`
 - default transaction/deploy/call algorithm: `ML-DSA-65`
 - deployment domain: `SYNQ_CONTRACT_DEPLOY_V1`
 - call domain: `SYNQ_CONTRACT_CALL_V1`
 
-Current Testnet-Beta node source uses network ID `synergy-testnet-v2`. The
-Model B node adapter treats `synergy-testnet` and `synergy-testnet-v2` as aliases
-only for chain `1264`, normalizing to pqsynq's `synergy-testnet` before calling
-`AegisSynQVerifier::testnet_1264()`. Wrong chains and unrelated network IDs are
+Current Testnet-Beta node source uses network ID `synergy-testnet-v3`. The
+Model B node adapter treats `synergy-testnet` and `synergy-testnet-v3` as aliases
+only for chain `1266`, normalizing to pqsynq's `synergy-testnet` before calling
+`AegisSynQVerifier::testnet_1266()`. Wrong chains and unrelated network IDs are
 rejected at the SynQ admission boundary.
 
 ## Testnet-Beta SynQ Carrier
@@ -138,12 +138,12 @@ and PQ-Gas lanes. `ExecutionContext.admission_pq_gas_used` carries the inner
 authorization cost into the local execution receipt. `ContractArtifact` now
 carries `manifest_json`, and `validate_synq_artifact` verifies manifest
 presence, `synq-bytecode-v1`, bytecode version/hash, ABI hash when present,
-chain `1264`, `synergy-testnet`/`synergy-testnet-v2` aliasing, and ML-DSA-65
+chain `1266`, `synergy-testnet`/`synergy-testnet-v3` aliasing, and ML-DSA-65
 policy before SynQ bytecode execution.
 
 ## TESTNET Node Validates
 
-The chain-1264 node/runtime must:
+The chain-1266 node/runtime must:
 
 - reject wrong chain/network/domain payloads before execution
 - verify `synq-admission-v1:` deploy/call carriers through `aegis-pqsynq`
@@ -159,14 +159,14 @@ The chain-1264 node/runtime must:
 ## Project Rosetta Boundary
 
 Rosetta is a settlement/verification consumer of the network, not a privileged
-compiler or AIVM owner. Its first Synergy profile binds to chain `1264` and
+compiler or AIVM owner. Its first Synergy profile binds to chain `1266` and
 network `synergy-testnet`. Rosetta may consume or index AIVM/node receipts after
 the receipt format is frozen, and it may use `aegis-pqsynq` for Synergy/SynQ
 signatures. It must preserve per-intent escrow, no pooled custody, and no
 wrapped-asset default.
 
 Current local Rosetta code includes a mock `SynergyTestnetReceiptVerifier` that
-accepts deterministic chain-1264 receipt artifacts and returns a Rosetta
+accepts deterministic chain-1266 receipt artifacts and returns a Rosetta
 `VerificationResult`. It intentionally has no live transaction submission API;
 the current public RPC/indexer exposure of the new internal SynQ verification
 summary fields remains pending.

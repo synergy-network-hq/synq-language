@@ -10,7 +10,7 @@ RPC/debug rendering. The receipt hash is SHA-256 over canonical binary bytes.
 | Field | Type |
 |---|---|
 | `receipt_version` | `u16`, `1` |
-| `chain_id` | `u64`, `1264` for testnet |
+| `chain_id` | `u64`, `1266` for testnet |
 | `network_id` | string, `synergy-testnet` |
 | `block_height` | `u64` |
 | `tx_hash` | 32 bytes |

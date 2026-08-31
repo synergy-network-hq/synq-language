@@ -8,7 +8,7 @@ Spec version: 0.1
 
 | Field | Value |
 |---|---|
-| `chain_id` | `1264` |
+| `chain_id` | `1266` |
 | `network_id` | `synergy-testnet` |
 | transaction signatures | `ML-DSA-65` |
 | deployment signatures | `ML-DSA-65` |
