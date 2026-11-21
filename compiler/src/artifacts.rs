@@ -384,6 +384,7 @@ fn collect_host_functions_from_block(
                     collect_host_functions_from_block(
                         &Block {
                             statements: vec![(**fallback).clone()],
+                            spans: vec![(0, 0)],
                         },
                         found,
                     );

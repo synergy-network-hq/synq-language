@@ -170,7 +170,7 @@ fn parse_contract_part(pair: Pair<Rule>) -> ContractPart {
 
 fn parse_constructor(pair: Pair<Rule>) -> ConstructorDefinition {
     let mut params = Vec::new();
-    let mut body = Block { statements: vec![] };
+    let mut body = Block { statements: vec![], spans: vec![] };
     let mut annotations = Vec::new();
 
     for item in pair.into_inner() {
@@ -261,7 +261,7 @@ fn parse_function(pair: Pair<Rule>) -> FunctionDefinition {
     let mut name = String::new();
     let mut params = Vec::new();
     let mut returns: Option<Type> = None;
-    let mut body = Block { statements: vec![] };
+    let mut body = Block { statements: vec![], spans: vec![] };
     let mut annotations = Vec::new();
 
     for item in pair.into_inner() {
@@ -318,8 +318,20 @@ fn parse_param(pair: Pair<Rule>) -> Parameter {
 }
 
 fn parse_block(pair: Pair<Rule>) -> Block {
-    let statements = pair.into_inner().filter_map(parse_statement).collect();
-    Block { statements }
+    // Capture each statement's source position BEFORE parse_statement
+    // consumes the pair, so Block.spans stays parallel to Block.statements
+    // and the semantic analyzer can attach a real line:col to every
+    // diagnostic it raises while walking a function/block body.
+    let mut statements = Vec::new();
+    let mut spans = Vec::new();
+    for stmt_pair in pair.into_inner() {
+        let (line, column) = stmt_pair.as_span().start_pos().line_col();
+        if let Some(statement) = parse_statement(stmt_pair) {
+            statements.push(statement);
+            spans.push((line, column));
+        }
+    }
+    Block { statements, spans }
 }
 
 fn parse_statement(pair: Pair<Rule>) -> Option<Statement> {
@@ -456,9 +468,11 @@ fn parse_statement(pair: Pair<Rule>) -> Option<Statement> {
                         else_block = Some(parse_block(item));
                     }
                     Rule::if_statement => {
+                        let nested_span = item.as_span().start_pos().line_col();
                         if let Some(nested_else_if) = parse_statement(item) {
                             else_block = Some(Block {
                                 statements: vec![nested_else_if],
+                                spans: vec![nested_span],
                             });
                         }
                     }
@@ -498,7 +512,7 @@ fn parse_statement(pair: Pair<Rule>) -> Option<Statement> {
             Some(Statement::Emit(event_name, args))
         }
         Rule::require_pqc_block => {
-            let mut pqc_block = Block { statements: vec![] };
+            let mut pqc_block = Block { statements: vec![], spans: vec![] };
             let mut fallback: Option<Box<Statement>> = None;
 
             for item in statement.into_inner() {
