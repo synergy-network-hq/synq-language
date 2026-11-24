@@ -79,6 +79,21 @@ pub struct Parameter {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Block {
     pub statements: Vec<Statement>,
+    /// Parallel to `statements` -- spans[i] is the (line, column) source
+    /// position of statements[i], captured at parse time from the pest
+    /// pair's start position. Lets the semantic analyzer attach a real
+    /// position to every diagnostic instead of always reporting line=None,
+    /// column=None (which is what every SemanticError carried before this
+    /// field existed, and is why the WASM Playground/ForgeIDE diagnostics
+    /// panel could never show a real line:col for semantic errors).
+    ///
+    /// `#[serde(skip)]`: this is purely an internal analysis-time aid, never
+    /// consumed downstream (VM, ABI, manifest). Skipping it keeps the AST
+    /// dump embedded in compiled artifacts byte-for-byte identical to
+    /// before this field existed, so it can't change bytecode_hash / break
+    /// deploy-artifact backward compatibility.
+    #[serde(skip)]
+    pub spans: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

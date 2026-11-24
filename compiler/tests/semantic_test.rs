@@ -243,3 +243,75 @@ contract DeadCode {
         .iter()
         .any(|e| e.message.contains("contains unreachable statement")));
 }
+
+// Regression tests for real line:col positions on semantic diagnostics.
+//
+// push_error() previously always emitted `line: None, column: None` --
+// Block never carried any per-statement source position at all, so the
+// WASM Playground/ForgeIDE diagnostics panel could never show (or even
+// distinguish) *where* an undefined-symbol / assignment-target error came
+// from. Block.spans (parallel to Block.statements, captured at parse time)
+// plus SemanticAnalyzer.current_span now give every pushed error a real
+// position matching the statement being analyzed when it was raised.
+
+#[test]
+fn semantic_error_carries_a_real_source_position() {
+    let source = r#"
+contract MissingSymbol {
+    function write() {
+        ghost = 1;
+    }
+}
+"#;
+
+    let errors = analyze_source(source).expect_err("undefined assignment must fail");
+    let ghost_error = errors
+        .iter()
+        .find(|e| e.message.contains("assigns to undefined symbol `ghost`"))
+        .expect("expected the undefined-assignment error");
+
+    assert!(
+        ghost_error.line.is_some() && ghost_error.column.is_some(),
+        "expected a real line/column, got {:?}/{:?}",
+        ghost_error.line,
+        ghost_error.column
+    );
+}
+
+#[test]
+fn two_undefined_assignment_targets_get_distinct_positions() {
+    // Two separate typo'd assignment targets in two different statements --
+    // both must be reported, and each must carry ITS OWN statement's
+    // position, not the same (or a missing) position for both.
+    let source = r#"
+contract MultipleMissingSymbols {
+    function write() {
+        firstGhost = 1;
+        secondGhost = 2;
+    }
+}
+"#;
+
+    let errors = analyze_source(source).expect_err("undefined assignments must fail");
+
+    let first = errors
+        .iter()
+        .find(|e| e.message.contains("assigns to undefined symbol `firstGhost`"))
+        .expect("expected firstGhost error");
+    let second = errors
+        .iter()
+        .find(|e| e.message.contains("assigns to undefined symbol `secondGhost`"))
+        .expect("expected secondGhost error");
+
+    assert!(first.line.is_some() && first.column.is_some());
+    assert!(second.line.is_some() && second.column.is_some());
+    assert_ne!(
+        (first.line, first.column),
+        (second.line, second.column),
+        "distinct statements must not share a position: {:?} vs {:?}",
+        (first.line, first.column),
+        (second.line, second.column)
+    );
+    // secondGhost is on the later source line.
+    assert!(second.line.unwrap() > first.line.unwrap());
+}

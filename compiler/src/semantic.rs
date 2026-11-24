@@ -7,6 +7,13 @@ use std::collections::HashMap;
 #[derive(Debug, Default)]
 pub struct SemanticAnalyzer {
     errors: Vec<SemanticError>,
+    /// Source position of the statement currently being analyzed, set by
+    /// analyze_block right before each analyze_statement call. push_error
+    /// reads this so every diagnostic gets a real line:col instead of the
+    /// previous hardcoded None/None -- this is what let two unrelated
+    /// semantic errors in the same compile report the same fake position
+    /// (or none at all) in the Playground/ForgeIDE diagnostics panel.
+    current_span: Option<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -186,7 +193,14 @@ impl SemanticAnalyzer {
 
     fn analyze_block(&mut self, block: &Block, ctx: &mut FunctionContext<'_>) -> bool {
         let mut terminated = false;
-        for statement in &block.statements {
+        for (idx, statement) in block.statements.iter().enumerate() {
+            // Block.spans is parallel to Block.statements (see its doc
+            // comment) -- stash this statement's real source position so
+            // push_error can attach it to every diagnostic raised while
+            // analyzing it, including diagnostics raised deeper inside
+            // expression type-inference for this same statement.
+            self.current_span = block.spans.get(idx).copied();
+
             if terminated {
                 self.push_error(format!(
                     "Function `{}` in contract `{}` contains unreachable statement after terminal control flow",
@@ -727,8 +741,8 @@ impl SemanticAnalyzer {
     fn push_error(&mut self, message: String) {
         self.errors.push(SemanticError {
             message,
-            line: None,
-            column: None,
+            line: self.current_span.map(|(line, _)| line),
+            column: self.current_span.map(|(_, column)| column),
         });
     }
 }
